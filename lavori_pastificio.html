@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Lavori Pastificio</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{--wheat:#f5e6c8;--wheat-dark:#e8d09a;--espresso:#2d1a0e;--terracotta:#b5451b;--sage:#6b7c5c;--cream:#fdf8f0;--gold:#c9921a;--card:#fffdf8;--shadow:0 4px 24px rgba(45,26,14,0.10);--radius:16px;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Montserrat',sans-serif;background:var(--cream);color:var(--espresso);min-height:100vh;}
+
+  #name-screen{position:fixed;inset:0;background:var(--espresso);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+  .name-box{background:var(--card);border-radius:24px;padding:40px 28px;max-width:400px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.3);animation:fadeUp .5s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+  .name-logo{font-size:52px;margin-bottom:12px;}
+  .name-box h1{font-family:'Lora',serif;font-size:22px;color:var(--espresso);margin-bottom:6px;}
+  .name-box p{font-size:13px;color:var(--sage);margin-bottom:24px;font-weight:600;}
+  .name-input{width:100%;padding:14px 16px;border:2px solid rgba(107,124,92,0.25);border-radius:12px;font-size:16px;font-family:'Montserrat',sans-serif;font-weight:600;text-align:center;outline:none;background:#fafaf7;color:var(--espresso);transition:border-color .2s;margin-bottom:12px;}
+  .name-input:focus{border-color:var(--terracotta);}
+  .name-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--terracotta) 0%,#8c3012 100%);color:#fff;border:none;border-radius:12px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;cursor:pointer;}
+  .name-err{color:var(--terracotta);font-size:13px;font-weight:600;margin-top:8px;min-height:16px;}
+
+  header{background:var(--espresso);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(45,26,14,0.3);}
+  .header-brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
+  .header-icon{width:38px;height:38px;min-width:38px;background:var(--terracotta);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .brand-text h1{font-family:'Lora',serif;font-size:16px;font-weight:600;color:var(--wheat);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .brand-text p{font-size:10px;color:rgba(245,230,200,0.5);font-weight:600;letter-spacing:1px;text-transform:uppercase;}
+  .header-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .conn-status{font-size:11px;color:rgba(245,230,200,0.6);display:flex;align-items:center;gap:4px;}
+  .live-dot{width:7px;height:7px;min-width:7px;background:#4caf50;border-radius:50%;animation:pulse 1.5s infinite;}
+  .offline-dot{width:7px;height:7px;min-width:7px;background:#f44336;border-radius:50%;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+  .worker-chip{background:rgba(201,146,26,0.2);border:1px solid rgba(201,146,26,0.35);color:var(--gold);font-size:11px;font-weight:700;padding:5px 10px;border-radius:20px;display:flex;align-items:center;gap:4px;cursor:pointer;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  .month-tabs{background:var(--espresso);padding:0 12px;display:flex;gap:2px;overflow-x:auto;border-bottom:2px solid rgba(201,146,26,0.2);-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .month-tabs::-webkit-scrollbar{display:none;}
+  .month-tab{padding:10px 14px;font-size:11px;font-weight:700;color:rgba(245,230,200,0.45);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;transition:all .2s;margin-bottom:-2px;flex-shrink:0;}
+  .month-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+  .main{max-width:900px;margin:0 auto;padding:16px 12px;}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid rgba(201,146,26,0.12);overflow:hidden;margin-bottom:16px;}
+  .card-header{background:linear-gradient(135deg,var(--terracotta) 0%,#8c3012 100%);padding:14px 18px;display:flex;align-items:center;gap:10px;}
+  .card-header h3{font-size:14px;font-weight:800;color:#fff;}
+  .card-body{padding:16px;}
+
+  .giornata-box{background:linear-gradient(135deg,#f0f7ff,#e8f4f8);border:2px solid #b8d4e8;border-radius:12px;padding:14px;}
+  .giornata-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#2c5f8a;margin-bottom:10px;}
+  .giornata-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .btn-giornata{margin-top:12px;width:100%;padding:10px;background:linear-gradient(135deg,#2c5f8a,#1a3d5c);color:#fff;border:none;border-radius:10px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:800;cursor:pointer;}
+  .giornata-banner{background:#e8f5e9;border:1px solid #81c784;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .gb-item{font-size:12px;font-weight:700;color:#2e7d32;}
+  .gb-edit{background:none;border:1px solid #81c784;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#2e7d32;cursor:pointer;font-family:'Montserrat',sans-serif;}
+
+  .sec-label{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--sage);margin-bottom:8px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .form-group{display:flex;flex-direction:column;gap:5px;}
+  .form-group label{font-size:10px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--sage);}
+  .form-group input,.form-group select,.form-group textarea{padding:10px 12px;border:2px solid rgba(107,124,92,0.2);border-radius:10px;font-size:14px;font-family:'Montserrat',sans-serif;font-weight:600;color:var(--espresso);background:#fafaf7;outline:none;transition:border-color .2s;width:100%;}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--terracotta);background:#fff;}
+  .form-group textarea{resize:vertical;min-height:55px;}
+  .form-group.full{grid-column:1/-1;}
+  .form-group select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7c5c' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+  .cliente-input{background:linear-gradient(135deg,#fff8f0,#fff5ec)!important;border-color:rgba(181,69,27,0.25)!important;}
+  .cliente-input:focus{border-color:var(--terracotta)!important;}
+
+  .unita-hint{font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;margin-top:4px;display:none;}
+  .unita-hint.show{display:block;}
+  .unita-pezzi{background:#fef3e2;color:#a06400;}
+  .unita-cartoni{background:#e3f2fd;color:#1565c0;}
+
+  .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(201,146,26,0.3),transparent);margin:14px 0;}
+  .custom-section{margin-top:14px;padding-top:14px;border-top:2px dashed rgba(201,146,26,0.25);}
+  .custom-tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;min-height:28px;}
+  .custom-tag{display:inline-flex;align-items:center;gap:5px;background:var(--espresso);color:var(--wheat);font-size:11px;font-weight:700;padding:5px 10px;border-radius:20px;cursor:pointer;border:2px solid transparent;}
+  .custom-tag.active-tag{background:var(--terracotta);}
+  .custom-tag .rm{font-size:13px;color:rgba(255,255,255,0.5);}
+  .add-tag-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .add-tag-input{flex:1;min-width:120px;padding:9px 12px;border:2px solid rgba(107,124,92,0.2);border-radius:10px;font-size:13px;font-family:'Montserrat',sans-serif;font-weight:600;outline:none;background:#fafaf7;}
+  .add-tag-price{width:85px;padding:9px 12px;border:2px solid rgba(107,124,92,0.2);border-radius:10px;font-size:13px;font-family:'Montserrat',sans-serif;font-weight:600;outline:none;background:#fafaf7;}
+  .add-tag-btn{padding:9px 14px;background:var(--gold);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;font-family:'Montserrat',sans-serif;}
+
+  .submit-row{margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .btn-submit{padding:13px 28px;background:linear-gradient(135deg,var(--terracotta) 0%,#8c3012 100%);color:#fff;border:none;border-radius:12px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(181,69,27,0.3);}
+  .btn-submit:disabled{opacity:0.5;cursor:not-allowed;}
+  .save-msg{font-size:12px;color:var(--sage);font-weight:700;display:none;}
+  .save-msg.show{display:block;}
+
+  .table-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+  .table-header h3{font-family:'Lora',serif;font-size:16px;color:var(--espresso);}
+  .count-badge{background:var(--wheat-dark);color:var(--espresso);font-size:12px;font-weight:800;padding:4px 12px;border-radius:20px;}
+
+  .day-group{margin:0 12px 14px;}
+  .day-header{background:var(--espresso);color:var(--wheat);padding:9px 14px;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:space-between;border-radius:10px 10px 0 0;flex-wrap:wrap;gap:4px;}
+  .day-meta{font-size:10px;color:rgba(245,230,200,0.6);font-weight:600;}
+  .day-records{border:1px solid rgba(201,146,26,0.15);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;}
+  .record-card{background:#fafaf7;padding:13px;border-bottom:1px solid rgba(201,146,26,0.1);}
+  .record-card:last-child{border-bottom:none;}
+  .rc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;}
+  .rc-cliente{font-size:11px;font-weight:800;color:var(--terracotta);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;}
+  .rc-desc{font-size:13px;font-weight:700;color:var(--espresso);line-height:1.3;}
+  .rc-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;}
+  .meta-item{display:flex;flex-direction:column;gap:2px;}
+  .meta-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:var(--sage);}
+  .meta-value{font-size:13px;font-weight:700;color:var(--espresso);}
+  .meta-qty{font-size:17px;color:var(--terracotta);}
+  .rc-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid rgba(201,146,26,0.1);}
+  .worker-tag{display:inline-flex;align-items:center;gap:4px;background:#f0f4ff;color:#3b5bdb;font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;}
+  .mine-tag{background:#e8f5e9!important;color:#2e7d32!important;}
+  .del-btn{width:32px;height:32px;background:#fff;border:1.5px solid rgba(181,69,27,0.25);border-radius:8px;color:var(--terracotta);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+  .chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;}
+  .chip-pezzi{background:#fef3e2;color:#a06400;}
+  .chip-cartoni{background:#e3f2fd;color:#1565c0;}
+
+  .empty-state{padding:48px 20px;text-align:center;}
+  .empty-icon{font-size:48px;margin-bottom:12px;opacity:0.4;}
+  .empty-state p{font-family:'Lora',serif;font-size:15px;color:var(--sage);font-style:italic;}
+  .loading{padding:40px;text-align:center;color:var(--sage);font-size:14px;font-weight:600;}
+  .fb-error{background:#fff3cd;border:2px solid #ffc107;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;font-weight:700;color:#856404;display:none;}
+  .fb-error.show{display:block;}
+
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--espresso);color:var(--wheat);padding:12px 22px;border-radius:12px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(45,26,14,0.25);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:9999;white-space:nowrap;max-width:90vw;text-align:center;}
+  #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+  #toast.ok{background:var(--sage);}
+  #toast.err{background:var(--terracotta);}
+</style>
+</head>
+<body>
+
+<div id="name-screen">
+  <div class="name-box">
+    <div class="name-logo">🍝</div>
+    <h1>Lavori Pastificio</h1>
+    <p>Scrivi il tuo nome per iniziare</p>
+    <input class="name-input" id="name-input" type="text" placeholder="Es. Mario Rossi" maxlength="40" onkeydown="if(event.key==='Enter')confirmName()">
+    <button class="name-btn" onclick="confirmName()">▶ Inizia</button>
+    <div class="name-err" id="name-err"></div>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+  <header>
+    <div class="header-brand">
+      <div class="header-icon">🍝</div>
+      <div class="brand-text"><h1>Lavori Pastificio</h1><p>Inserimento giornaliero</p></div>
+    </div>
+    <div class="header-right">
+      <span class="conn-status" id="conn-status"></span>
+      <div class="worker-chip" onclick="changeName()">👤 <span id="worker-name-display"></span></div>
+    </div>
+  </header>
+
+  <div class="month-tabs" id="month-tabs"></div>
+
+  <div class="main">
+    <div class="fb-error" id="fb-error">⚠️ Problema connessione. Controlla internet o avvisa il responsabile.</div>
+
+    <!-- GIORNATA -->
+    <div class="card">
+      <div class="card-header"><span style="font-size:18px;">👥</span><h3>Dati giornata lavorativa</h3></div>
+      <div class="card-body">
+        <div class="giornata-box" id="giornata-box">
+          <div class="giornata-title">👷 Persone e ore — inserisci una volta sola per giorno</div>
+          <div class="giornata-grid">
+            <div class="form-group"><label>📅 Data</label><input type="date" id="g-data"></div>
+            <div class="form-group"><label>👷 N° Persone</label><input type="number" id="g-persone" min="1" placeholder="es. 3" inputmode="numeric"></div>
+            <div class="form-group"><label>⏱️ Ore lavorate</label><input type="number" id="g-ore" min="0.5" step="0.5" placeholder="es. 8" inputmode="decimal"></div>
+          </div>
+          <button class="btn-giornata" onclick="saveGiornata()">💾 Salva dati giornata</button>
+        </div>
+        <div id="giornata-info" style="display:none;"></div>
+        <p style="font-size:11px;color:var(--sage);margin-top:10px;font-weight:600;">💡 Puoi aggiungere più lavorazioni nella stessa giornata usando il form qui sotto.</p>
+      </div>
+    </div>
+
+    <!-- FORM LAVORAZIONE -->
+    <div class="card">
+      <div class="card-header"><span style="font-size:18px;">✏️</span><h3>Inserisci lavorazione</h3></div>
+      <div class="card-body">
+
+        <div class="form-grid" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label>📅 Data lavorazione</label>
+            <input type="date" id="f-data">
+          </div>
+          <div class="form-group">
+            <label>🏢 Cliente</label>
+            <input type="text" id="f-cliente" class="cliente-input" placeholder="es. HOMEGOODS USA" autocomplete="off" oninput="this.value=this.value.toUpperCase()">
+          </div>
+        </div>
+
+        <div class="sec-label">📋 Articolo lavorato</div>
+        <div class="form-group full" style="margin-bottom:6px;">
+          <select id="f-articolo" onchange="onArticoloChange()">
+            <option value="">— Seleziona articolo —</option>
+            <optgroup label="── Etichettatura ──">
+              <option value="ETICHETTA/PREZZATURA|0.045|pezzi">ETICHETTA / PREZZATURA</option>
+            </optgroup>
+            <optgroup label="── Riso e Legumi ──">
+              <option value="RISO BOX|0.068|pezzi">RISO BOX</option>
+              <option value="LENTICCHIE BOX|0.068|pezzi">LENTICCHIE BOX</option>
+              <option value="RISO BOX + ETICHETTA|0.095|pezzi">RISO BOX + ETICHETTA</option>
+            </optgroup>
+            <optgroup label="── Pasta e Spaghetti ──">
+              <option value="SPAGHETTI BOX + TIMBRATURA|0.095|pezzi">SPAGHETTI BOX + TIMBRATURA</option>
+              <option value="PASTA BOX + PREZZO|0.095|pezzi">PASTA BOX + PREZZO</option>
+              <option value="PASTA|0.50|cartoni">PASTA ✦ a cartoni</option>
+            </optgroup>
+            <optgroup label="── Sughi e Barattoli ──">
+              <option value="SUGO BARATTOLO + PREZZO + RIMESSA NEL CARTONE|0.20|pezzi">SUGO BARATTOLO + PREZZO + RIMESSA NEL CARTONE</option>
+              <option value="OLIVE BARATTOLO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE|0.25|pezzi">OLIVE BARATTOLO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE</option>
+              <option value="BARATTOLO SUGO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE|0.25|pezzi">BARATTOLO SUGO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE</option>
+              <option value="BARATTOLO ETICHETTA + SPAGO + CAPPUCCIO + RIMESSA NEL CARTONE|0.25|pezzi">BARATTOLO ETICHETTA + SPAGO + CAPPUCCIO + RIMESSA NEL CARTONE</option>
+            </optgroup>
+            <optgroup label="── Spezie ──">
+              <option value="SPEZIE BOX + TIMBRATURA|0.25|pezzi">SPEZIE BOX + TIMBRATURA</option>
+              <option value="SPEZIE CARTONE|0.35|cartoni">SPEZIE CARTONE ✦ a cartoni</option>
+              <option value="VASO SPEZIE CARTONE|0.35|cartoni">VASO SPEZIE CARTONE ✦ a cartoni</option>
+            </optgroup>
+            <optgroup label="── Olio e Sale ──">
+              <option value="OLIO BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO|0.25|pezzi">OLIO BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO</option>
+              <option value="SALE BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO|0.25|pezzi">SALE BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO</option>
+            </optgroup>
+            <optgroup label="── Altro ──">
+              <option value="__custom__">➕ Articolo non in lista…</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="unita-hint" id="unita-hint"></div>
+
+        <div class="custom-section" id="custom-section" style="display:none;">
+          <div class="sec-label" style="margin-top:10px;">✨ Articoli personalizzati</div>
+          <div class="custom-tag-row" id="custom-tags"></div>
+          <div class="add-tag-row">
+            <input class="add-tag-input" id="new-tag-input" placeholder="Nome articolo…" maxlength="60" onkeydown="if(event.key==='Enter')addCustomTag()">
+            <input class="add-tag-price" id="new-tag-price" type="number" step="0.001" min="0" placeholder="€/cad">
+            <button class="add-tag-btn" onclick="addCustomTag()">+ Salva</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="form-grid">
+          <div class="form-group"><label>🔤 N° Ordine / Lotto</label><input type="text" id="f-ordine" placeholder="es. 629785 o AB-123" autocomplete="off"></div>
+          <div class="form-group"><label id="f-qty-label">🔢 Quantità</label><input type="number" id="f-qty" min="0" placeholder="es. 5472" inputmode="numeric"></div>
+          <div class="form-group" id="f-cartoni-group" style="display:none;"><label>📫 N° Cartoni</label><input type="number" id="f-cartoni" min="0" placeholder="—" value="0" inputmode="numeric"></div>
+          <div class="form-group full"><label>📝 Note (opzionale)</label><textarea id="f-note" placeholder="Eventuali annotazioni…"></textarea></div>
+        </div>
+
+        <div class="submit-row">
+          <button class="btn-submit" id="btn-save" onclick="addRecord()">✅ Salva lavorazione</button>
+          <span class="save-msg" id="save-msg">✔ Salvato!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- LISTA -->
+    <div class="card">
+      <div class="table-header">
+        <h3 id="table-title">Lavori del mese</h3>
+        <span class="count-badge" id="count-badge">—</span>
+      </div>
+      <div id="record-list"><div class="loading">⏳ Connessione…</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, push, remove, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBOFqkem40QWV_0uWmj7ivQMVJ55zDtwhs",
+  authDomain: "pastificio-e004f.firebaseapp.com",
+  databaseURL: "https://pastificio-e004f-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "pastificio-e004f",
+  storageBucket: "pastificio-e004f.firebasestorage.app",
+  messagingSenderId: "439505555806",
+  appId: "1:439505555806:web:7780ecf3f7fc77ca34ffcf"
+};
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+
+// ── PREZZARIO UFFICIALE (16 voci) ──
+const PREZZARIO = [
+  {desc:"ETICHETTA/PREZZATURA",          prezzo:0.045, unita:"pezzi"},
+  {desc:"RISO BOX",                       prezzo:0.068, unita:"pezzi"},
+  {desc:"LENTICCHIE BOX",                prezzo:0.068, unita:"pezzi"},
+  {desc:"RISO BOX + ETICHETTA",          prezzo:0.095, unita:"pezzi"},
+  {desc:"SPAGHETTI BOX + TIMBRATURA",    prezzo:0.095, unita:"pezzi"},
+  {desc:"PASTA BOX + PREZZO",            prezzo:0.095, unita:"pezzi"},
+  {desc:"SUGO BARATTOLO + PREZZO + RIMESSA NEL CARTONE",                    prezzo:0.20, unita:"pezzi"},
+  {desc:"OLIVE BARATTOLO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE",         prezzo:0.25, unita:"pezzi"},
+  {desc:"BARATTOLO SUGO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE",          prezzo:0.25, unita:"pezzi"},
+  {desc:"BARATTOLO ETICHETTA + SPAGO + CAPPUCCIO + RIMESSA NEL CARTONE",    prezzo:0.25, unita:"pezzi"},
+  {desc:"SPEZIE BOX + TIMBRATURA",       prezzo:0.25, unita:"pezzi"},
+  {desc:"OLIO BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO",  prezzo:0.25, unita:"pezzi"},
+  {desc:"SALE BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO",  prezzo:0.25, unita:"pezzi"},
+  {desc:"SPEZIE CARTONE",                prezzo:0.35, unita:"cartoni"},
+  {desc:"VASO SPEZIE CARTONE",           prezzo:0.35, unita:"cartoni"},
+  {desc:"PASTA",                         prezzo:0.50, unita:"cartoni"},
+];
+
+function generateMonths(){
+  const m=["NOVEMBRE 2025"],n=["GENNAIO","FEBBRAIO","MARZO","APRILE","MAGGIO","GIUGNO","LUGLIO","AGOSTO","SETTEMBRE","OTTOBRE","NOVEMBRE","DICEMBRE"];
+  n.forEach(x=>m.push(x+" 2026"));
+  const y=new Date().getFullYear();
+  if(y>2026)for(let yr=2027;yr<=y+1;yr++)n.forEach(x=>m.push(x+" "+yr));
+  return m;
+}
+function getCurrentMonth(){
+  const d=new Date(),n=["GENNAIO","FEBBRAIO","MARZO","APRILE","MAGGIO","GIUGNO","LUGLIO","AGOSTO","SETTEMBRE","OTTOBRE","NOVEMBRE","DICEMBRE"];
+  return n[d.getMonth()]+" "+d.getFullYear();
+}
+const MONTHS=generateMonths();
+let currentMonth=getCurrentMonth(),workerName='',customTypes=[],currentRows=[],giornate={};
+let unsubMonth=null,selectedCustom=null,currentUnita='pezzi';
+
+// NAME
+window.confirmName=function(){
+  const v=document.getElementById('name-input').value.trim();
+  if(!v||v.length<2){document.getElementById('name-err').textContent='⚠️ Inserisci il tuo nome completo';return;}
+  workerName=v;localStorage.setItem('pastificio_worker_name',v);
+  document.getElementById('name-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('worker-name-display').textContent=v;
+  init();
+};
+window.changeName=function(){
+  if(!confirm('Vuoi cambiare il tuo nome?'))return;
+  localStorage.removeItem('pastificio_worker_name');
+  document.getElementById('name-input').value='';
+  document.getElementById('name-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+};
+
+// ARTICOLO
+window.onArticoloChange=function(){
+  const val=document.getElementById('f-articolo').value;
+  const hint=document.getElementById('unita-hint');
+  const cSec=document.getElementById('custom-section');
+  const qLbl=document.getElementById('f-qty-label');
+  const cGrp=document.getElementById('f-cartoni-group');
+  selectedCustom=null;
+  if(!val){hint.className='unita-hint';hint.textContent='';cSec.style.display='none';currentUnita='pezzi';return;}
+  if(val==='__custom__'){cSec.style.display='block';hint.className='unita-hint unita-pezzi show';hint.textContent='✨ Seleziona o crea articolo personalizzato';currentUnita='pezzi';return;}
+  cSec.style.display='none';
+  const parts=val.split('|');
+  currentUnita=parts[2]||'pezzi';
+  if(currentUnita==='cartoni'){
+    hint.className='unita-hint unita-cartoni show';hint.textContent='📦 Questo articolo si conteggia a CARTONI';
+    qLbl.textContent='📦 Numero Cartoni';cGrp.style.display='none';
+  } else {
+    hint.className='unita-hint unita-pezzi show';hint.textContent='🔢 Questo articolo si conteggia a PEZZI';
+    qLbl.textContent='🔢 Numero Pezzi';cGrp.style.display='block';
+  }
+};
+
+// CUSTOM
+window.selectCustomTipo=function(id){
+  customTypes.forEach(ct=>ct.selected=ct.id===id);
+  selectedCustom=customTypes.find(c=>c.id===id)||null;
+  currentUnita=selectedCustom?(selectedCustom.unita||'pezzi'):'pezzi';
+  document.getElementById('f-qty-label').textContent=currentUnita==='cartoni'?'📦 Numero Cartoni':'🔢 Numero Pezzi';
+  const h=document.getElementById('unita-hint');
+  h.className=`unita-hint ${currentUnita==='cartoni'?'unita-cartoni':'unita-pezzi'} show`;
+  h.textContent=currentUnita==='cartoni'?'📦 Conteggio a CARTONI':'🔢 Conteggio a PEZZI';
+  renderCustomTags();
+};
+window.addCustomTag=function(){
+  const n=document.getElementById('new-tag-input').value.trim();
+  const p=parseFloat(document.getElementById('new-tag-price').value)||0;
+  if(!n){toast('⚠️ Inserisci il nome','err');return;}
+  if(!p){toast('⚠️ Inserisci il prezzo','err');return;}
+  customTypes.push({id:'ct'+Date.now(),label:n,prezzo:p,unita:'pezzi',selected:false});
+  document.getElementById('new-tag-input').value='';document.getElementById('new-tag-price').value='';
+  set(ref(db,'customTypes'),customTypes);renderCustomTags();toast('✨ Articolo salvato!','ok');
+};
+window.removeCustomTag=function(id){
+  customTypes=customTypes.filter(ct=>ct.id!==id);
+  if(selectedCustom&&selectedCustom.id===id){selectedCustom=null;currentUnita='pezzi';}
+  set(ref(db,'customTypes'),customTypes);renderCustomTags();
+};
+function renderCustomTags(){
+  const c=document.getElementById('custom-tags');if(!c)return;
+  if(!customTypes.length){c.innerHTML='<span style="font-size:12px;color:#bbb;font-style:italic;">Nessun articolo personalizzato</span>';return;}
+  c.innerHTML=customTypes.map(ct=>`<div class="custom-tag ${ct.selected?'active-tag':''}" onclick="selectCustomTipo('${ct.id}')">✦ ${ct.label}<span class="rm" onclick="event.stopPropagation();removeCustomTag('${ct.id}')"> ×</span></div>`).join('');
+}
+
+// GIORNATA
+window.saveGiornata=async function(){
+  const data=document.getElementById('g-data').value;
+  const persone=parseInt(document.getElementById('g-persone').value)||0;
+  const ore=parseFloat(document.getElementById('g-ore').value)||0;
+  if(!data){toast('⚠️ Inserisci la data','err');return;}
+  if(persone<=0){toast('⚠️ Inserisci il numero di persone','err');return;}
+  if(ore<=0){toast('⚠️ Inserisci le ore','err');return;}
+  try{
+    await set(ref(db,'giornate/'+currentMonth.replace(/ /g,'_')+'/'+data.replace(/-/g,'')),{data,persone,ore,ts:Date.now()});
+    toast('✅ Dati giornata salvati!','ok');
+  }catch(e){showFbError();toast('❌ Errore database','err');}
+};
+function renderGiornataInfo(data){
+  const g=data?giornate[data.replace(/-/g,'')]:null;
+  if(g){
+    document.getElementById('giornata-box').style.display='none';
+    document.getElementById('giornata-info').style.display='block';
+    document.getElementById('giornata-info').innerHTML=`<div class="giornata-banner">
+      <div class="gb-item">📅 <strong>${g.data}</strong></div>
+      <div class="gb-item">👷 <strong>${g.persone} persone</strong></div>
+      <div class="gb-item">⏱️ <strong>${g.ore}h</strong></div>
+      <div class="gb-item">⏰ <strong>Tot: ${(g.persone*g.ore).toFixed(1)}h</strong></div>
+      <button class="gb-edit" onclick="editGiornata('${data}')">✏️ Modifica</button>
+    </div>`;
+  } else {
+    document.getElementById('giornata-box').style.display='block';
+    document.getElementById('giornata-info').style.display='none';
+  }
+}
+window.editGiornata=function(data){
+  const g=giornate[(data||'').replace(/-/g,'')];
+  if(g){document.getElementById('g-data').value=g.data;document.getElementById('g-persone').value=g.persone;document.getElementById('g-ore').value=g.ore;}
+  document.getElementById('giornata-box').style.display='block';
+  document.getElementById('giornata-info').style.display='none';
+};
+document.addEventListener('change',function(e){
+  if(e.target.id==='f-data')renderGiornataInfo(e.target.value);
+  if(e.target.id==='g-data'){const g=giornate[(e.target.value||'').replace(/-/g,'')];if(g){document.getElementById('g-persone').value=g.persone;document.getElementById('g-ore').value=g.ore;}}
+});
+
+// TABS
+function renderTabs(){
+  document.getElementById('month-tabs').innerHTML=MONTHS.map(m=>`<div class="month-tab ${m===currentMonth?'active':''}" onclick="switchMonth('${m}')">${m}</div>`).join('');
+  setTimeout(()=>{const a=document.querySelector('.month-tab.active');if(a)a.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});},100);
+}
+window.switchMonth=function(m){currentMonth=m;renderTabs();listenMonth();listenGiornate();};
+
+// FIREBASE
+function listenMonth(){
+  if(unsubMonth)unsubMonth();
+  document.getElementById('record-list').innerHTML='<div class="loading">⏳ Caricamento…</div>';
+  const key=currentMonth.replace(/ /g,'_');
+  const dbRef=ref(db,'lavori/'+key);
+  const unsub=onValue(dbRef,snap=>{
+    currentRows=[];
+    if(snap.exists()){
+      snap.forEach(c=>{
+        const val=c.val();
+        if(val && typeof val==='object') currentRows.push({fbKey:c.key,...val});
+      });
+    }
+    currentRows.sort((a,b)=>(b.ts||0)-(a.ts||0));
+    renderList();
+    setConn(true);
+    hideFbError();
+  },err=>{
+    setConn(false);
+    showFbError();
+    console.error('Firebase error:',err);
+  });
+  unsubMonth=()=>unsub();
+}
+function listenGiornate(){
+  onValue(ref(db,'giornate/'+currentMonth.replace(/ /g,'_')),snap=>{
+    giornate={};
+    if(snap.exists())snap.forEach(c=>{giornate[c.key]=c.val();});
+    const d=document.getElementById('f-data').value;if(d)renderGiornataInfo(d);
+  });
+}
+function setConn(ok){document.getElementById('conn-status').innerHTML=ok?`<span class="live-dot"></span> Live`:`<span class="offline-dot"></span> Offline`;}
+function showFbError(){document.getElementById('fb-error').classList.add('show');}
+function hideFbError(){document.getElementById('fb-error').classList.remove('show');}
+
+// RENDER raggruppato per data
+function renderList(){
+  const rows=currentRows;
+  document.getElementById('table-title').textContent='Lavori – '+currentMonth;
+  document.getElementById('count-badge').textContent=rows.length+' voci';
+  const cont=document.getElementById('record-list');
+  if(!rows.length){cont.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><p>Nessun lavoro inserito per ${currentMonth}</p></div>`;return;}
+  const byDate={};
+  rows.forEach(r=>{const d=r.data||'senza data';if(!byDate[d])byDate[d]=[];byDate[d].push(r);});
+  const dates=Object.keys(byDate).sort((a,b)=>b>a?1:-1);
+  cont.innerHTML='<div style="padding:12px;">'+dates.map(date=>{
+    const dr=byDate[date];
+    const g=giornate[date.replace(/-/g,'')];
+    const meta=g?`${g.persone} persone · ${g.ore}h · tot. ${(g.persone*g.ore).toFixed(1)}h`:'⚠️ dati ore mancanti';
+    return `<div class="day-group">
+      <div class="day-header">
+        <span>📅 ${date}</span>
+        <span class="day-meta">👷 ${meta} · ${dr.length} lavorazioni</span>
+      </div>
+      <div class="day-records">
+        ${dr.map(r=>{
+          const isMine=r.lavoratore===workerName;
+          const fbKey=r.fbKey||'';
+          const unita=r.unita||'pezzi';
+          return `<div class="record-card">
+            <div class="rc-top">
+              <div style="flex:1">
+                ${r.cliente?`<div class="rc-cliente">🏢 ${r.cliente}</div>`:''}
+                <div class="rc-desc">${r.descrizione}</div>
+              </div>
+              <span class="chip chip-${unita==='cartoni'?'cartoni':'pezzi'}">${unita==='cartoni'?'Cartoni':'Pezzi'}</span>
+            </div>
+            <div class="rc-meta">
+              <div class="meta-item"><span class="meta-label">🔤 N° Ordine</span><span class="meta-value">${r.ordine||'—'}</span></div>
+              <div class="meta-item"><span class="meta-label">${unita==='cartoni'?'📦 Cartoni':'🔢 Pezzi'}</span><span class="meta-value meta-qty">${Number(r.quantita||0).toLocaleString('it')}</span></div>
+              ${unita!=='cartoni'&&r.cartoni?`<div class="meta-item"><span class="meta-label">📫 Cartoni</span><span class="meta-value">${r.cartoni}</span></div>`:''}
+              ${r.note?`<div class="meta-item" style="grid-column:1/-1"><span class="meta-label">📝 Note</span><span class="meta-value" style="font-size:12px;">${r.note}</span></div>`:''}
+            </div>
+            <div class="rc-footer">
+              <span class="worker-tag ${isMine?'mine-tag':''}">👤 ${r.lavoratore||'—'}</span>
+              ${isMine&&fbKey
+                ?`<button class="del-btn" onclick="deleteRecord('${fbKey}')" title="Elimina">✕</button>`
+                :isMine&&!fbKey
+                  ?`<button class="del-btn" onclick="deleteRecordLegacy(this)" title="Elimina (legacy)" style="opacity:0.5;">✕</button>`
+                  :`<span style="font-size:18px;opacity:0.2;">🔒</span>`}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+// CRUD
+window.addRecord=async function(){
+  const val=document.getElementById('f-articolo').value;
+  if(!val){toast('⚠️ Seleziona un articolo','err');return;}
+  const data=document.getElementById('f-data').value;
+  if(!data){toast('⚠️ Inserisci la data','err');return;}
+  const cliente=document.getElementById('f-cliente').value.trim();
+  const ordine=document.getElementById('f-ordine').value.trim();
+  const qty=parseInt(document.getElementById('f-qty').value)||0;
+  if(qty<=0){toast('⚠️ Inserisci la quantità','err');return;}
+  const note=document.getElementById('f-note').value.trim();
+  let descrizione,prezzo,unita;
+  if(val==='__custom__'){
+    if(!selectedCustom){toast('⚠️ Seleziona un articolo personalizzato','err');return;}
+    descrizione=selectedCustom.label;prezzo=selectedCustom.prezzo||0;unita=selectedCustom.unita||'pezzi';
+  } else {
+    const p=val.split('|');descrizione=p[0];prezzo=parseFloat(p[1])||0;unita=p[2]||'pezzi';
+  }
+  const cartoni=unita==='pezzi'?(parseInt(document.getElementById('f-cartoni').value)||0):0;
+  const btn=document.getElementById('btn-save');btn.disabled=true;btn.textContent='⏳ Salvataggio…';
+  try{
+    await push(ref(db,'lavori/'+currentMonth.replace(/ /g,'_')),{data,cliente,lavoratore:workerName,descrizione,prezzo,unita,quantita:qty,cartoni,ordine,note,ts:Date.now()});
+    // reset — mantieni data e cliente per inserimenti multipli della stessa giornata
+    document.getElementById('f-articolo').value='';
+    document.getElementById('f-ordine').value='';
+    document.getElementById('f-qty').value='';
+    document.getElementById('f-cartoni').value='0';
+    document.getElementById('f-note').value='';
+    document.getElementById('unita-hint').className='unita-hint';
+    document.getElementById('unita-hint').textContent='';
+    document.getElementById('f-qty-label').textContent='🔢 Quantità';
+    document.getElementById('f-cartoni-group').style.display='none';
+    document.getElementById('custom-section').style.display='none';
+    selectedCustom=null;customTypes.forEach(ct=>ct.selected=false);renderCustomTags();
+    const sm=document.getElementById('save-msg');sm.classList.add('show');setTimeout(()=>sm.classList.remove('show'),2500);
+    toast('✅ Lavorazione salvata!','ok');hideFbError();
+    // Scorri verso la lista per vedere il lavoro appena salvato
+    setTimeout(()=>document.getElementById('record-list').scrollIntoView({behavior:'smooth'}),500);
+  }catch(e){showFbError();toast('❌ Errore salvataggio','err');console.error(e);}
+  btn.disabled=false;btn.textContent='✅ Salva lavorazione';
+};
+
+window.deleteRecord=async function(fbKey){
+  if(!fbKey){toast('❌ Impossibile eliminare','err');return;}
+  if(!confirm('Eliminare questa lavorazione?'))return;
+  try{await remove(ref(db,'lavori/'+currentMonth.replace(/ /g,'_')+'/'+fbKey));toast('🗑️ Eliminato','');}
+  catch(e){showFbError();toast('❌ Errore eliminazione','err');}
+};
+
+window.deleteRecordLegacy=async function(btn){
+  if(!confirm('Eliminare questo elemento?'))return;
+  // Cerca il record per timestamp nei dati correnti e lo rimuove cercando per contenuto
+  toast('⚠️ Elemento non eliminabile, cancella da Firebase','err');
+};
+
+function toast(msg,type){
+  const t=document.getElementById('toast');t.textContent=msg;t.className='show '+(type||'');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.className='',2800);
+}
+
+async function init(){
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('f-data').value=today;
+  document.getElementById('g-data').value=today;
+  onValue(ref(db,'customTypes'),snap=>{customTypes=snap.exists()?(snap.val()||[]):[];renderCustomTags();});
+  renderTabs();listenMonth();listenGiornate();
+}
+
+window.addEventListener('load',()=>{
+  const saved=localStorage.getItem('pastificio_worker_name');
+  if(saved){workerName=saved;document.getElementById('name-input').value=saved;document.getElementById('name-screen').style.display='none';document.getElementById('app').style.display='block';document.getElementById('worker-name-display').textContent=saved;init();}
+});
+</script>
+</body>
+</html>
