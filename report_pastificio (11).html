@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Report Pastificio</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1208;--paper:#f8f4ed;--warm:#fdfaf5;--gold:#c9921a;--gold-light:#f0d690;--rust:#b5451b;--olive:#5a7a3a;--muted:#8a7e6e;--card:#fff;--border:rgba(201,146,26,0.15);--shadow:0 4px 20px rgba(26,18,8,0.10);--radius:14px;--blue:#1a5fa8;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;}
+
+  #login{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+  .login-box{background:var(--warm);border-radius:24px;padding:44px 36px;max-width:380px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.4);animation:fadeUp .5s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+  .login-logo{font-size:52px;margin-bottom:14px;}
+  .login-box h1{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;margin-bottom:6px;}
+  .login-box p{font-size:13px;color:var(--muted);margin-bottom:28px;}
+  .pin-field{width:100%;padding:14px;font-size:26px;letter-spacing:10px;text-align:center;border:2px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-weight:700;background:var(--paper);color:var(--ink);outline:none;margin-bottom:14px;}
+  .pin-field:focus{border-color:var(--gold);}
+  .login-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),#a07010);color:#fff;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
+  .pin-err{color:var(--rust);font-size:13px;font-weight:600;margin-top:10px;min-height:18px;}
+
+  header{background:var(--warm);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);flex-wrap:wrap;}
+  .hbrand{display:flex;align-items:center;gap:12px;flex:1;min-width:0;}
+  .hlogo{width:40px;height:40px;min-width:40px;background:linear-gradient(135deg,var(--gold),#a07010);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .hbrand-text h1{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hbrand-text p{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.8px;text-transform:uppercase;}
+  .hright{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .live-pill{display:flex;align-items:center;gap:5px;background:rgba(90,122,58,0.1);color:var(--olive);font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid rgba(90,122,58,0.25);white-space:nowrap;}
+  .live-dot{width:6px;height:6px;background:var(--olive);border-radius:50%;animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+  .btn-sm{padding:7px 12px;border:1.5px solid var(--border);background:transparent;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;}
+  .btn-sm:hover{border-color:var(--rust);color:var(--rust);}
+  .btn-print{background:var(--gold)!important;color:#fff!important;border-color:var(--gold)!important;}
+
+  .tabs-bar{background:var(--warm);padding:0 12px;display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .tabs-bar::-webkit-scrollbar{display:none;}
+  .tab{padding:11px 14px;font-size:12px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;transition:all .2s;margin-bottom:-1px;flex-shrink:0;}
+  .tab.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:700;}
+
+  .main{max-width:1200px;margin:0 auto;padding:20px 12px;}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
+  @media(min-width:600px){.kpi-grid{grid-template-columns:repeat(4,1fr);}}
+  .kpi{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden;}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-light));}
+  .kpi.green::before{background:linear-gradient(90deg,var(--olive),#8ab05a);}
+  .kpi.rust::before{background:linear-gradient(90deg,var(--rust),#e07050);}
+  .kpi.blue::before{background:linear-gradient(90deg,var(--blue),#4a90d9);}
+  .kpi-label{font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  .kpi-val{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;line-height:1;}
+  .kpi-val.money{color:var(--olive);}
+  .kpi-val.blue{color:var(--blue);}
+  .kpi-sub{font-size:11px;color:var(--muted);margin-top:5px;}
+
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;margin-bottom:16px;}
+  .card-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+  .card-hdr h3{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;}
+
+  .months-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px;}
+  @media(min-width:500px){.months-grid{grid-template-columns:1fr 1fr;}}
+  @media(min-width:900px){.months-grid{grid-template-columns:1fr 1fr 1fr;}}
+  .month-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid var(--border);cursor:pointer;transition:all .2s;}
+  .month-card:hover{transform:translateY(-2px);border-color:var(--gold);}
+  .month-card.empty-month{opacity:0.4;}
+  .month-card h4{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;margin-bottom:10px;}
+  .mc-line{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(201,146,26,0.08);font-size:12px;}
+  .mc-total{margin-top:10px;text-align:right;}
+  .mc-total .val{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--olive);}
+  .mc-total .sub{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;}
+
+  .stbl{width:100%;border-collapse:collapse;font-size:13px;}
+  .stbl thead th{padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--border);}
+  .stbl tbody tr{border-bottom:1px solid rgba(201,146,26,0.08);}
+  .stbl tbody tr:hover{background:#fdf8f0;}
+  .stbl td{padding:10px 14px;vertical-align:middle;}
+  .stbl tfoot td{padding:11px 14px;font-weight:700;background:#fdf8f0;}
+  .stbl .grand-row td{background:var(--ink);color:var(--gold-light);font-size:14px;font-weight:700;font-family:'Playfair Display',serif;}
+  .grand-num{font-size:16px;font-weight:900;color:#7ce89a;}
+  .money-cell{font-family:'Playfair Display',serif;font-weight:700;color:var(--olive);}
+  .blue-cell{font-family:'Playfair Display',serif;font-weight:700;color:var(--blue);}
+
+  /* DETTAGLIO PER DATA */
+  .day-block{margin-bottom:16px;}
+  .day-block-header{background:var(--ink);color:var(--wheat);padding:10px 16px;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;}
+  .day-block-header strong{font-size:14px;}
+  .day-block-meta{font-size:11px;color:rgba(245,230,200,0.6);}
+  .day-block-body{border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;}
+  .day-row{padding:12px 16px;border-bottom:1px solid rgba(201,146,26,0.08);display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start;}
+  .day-row:last-child{border-bottom:none;}
+  .day-row:hover{background:#fdf8f0;}
+  .dr-main .dr-cliente{font-size:10px;font-weight:800;color:var(--rust);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;}
+  .dr-main .dr-desc{font-size:13px;font-weight:700;}
+  .dr-main .dr-meta{font-size:12px;color:var(--muted);margin-top:4px;}
+  .dr-right{text-align:right;}
+  .dr-qty{font-size:14px;font-weight:800;color:var(--ink);}
+  .dr-amount{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--olive);}
+  .dr-worker{font-size:10px;color:var(--muted);margin-top:2px;}
+  .chip{display:inline-block;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:800;text-transform:uppercase;margin-left:4px;}
+  .chip-pezzi{background:#fef3e2;color:#a06400;}
+  .chip-cartoni{background:#e3f2fd;color:#1565c0;}
+  .ora-badge{display:inline-block;background:#e3f0ff;color:var(--blue);font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;}
+  .euro-ora{display:inline-block;background:#e8f5e9;color:#2e7d32;font-size:12px;font-weight:800;padding:3px 9px;border-radius:10px;font-family:'Playfair Display',serif;}
+
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 14px;background:#fdf8f0;border-bottom:1px solid var(--border);}
+  .filter-row select,.filter-row input{padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;background:var(--card);color:var(--ink);outline:none;font-weight:500;}
+  .filter-row input{flex:1;min-width:120px;}
+
+  .empty{padding:44px 20px;text-align:center;}
+  .empty .ei{font-size:44px;opacity:.3;margin-bottom:10px;}
+  .empty p{font-family:'Playfair Display',serif;font-size:15px;color:var(--muted);font-style:italic;}
+  .loading{padding:40px;text-align:center;color:var(--muted);font-size:14px;font-weight:600;}
+  .tbl-wrap{overflow-x:auto;}
+
+  /* PRINT */
+  @media print{
+    #login,header,.tabs-bar,.filter-row,.btn-print,.btn-sm,.live-pill,.no-print{display:none!important;}
+    body{background:#fff!important;}
+    .main{padding:0!important;max-width:100%!important;}
+    .card{box-shadow:none!important;border:1px solid #ccc!important;margin-bottom:12px!important;break-inside:avoid;}
+    .kpi{box-shadow:none!important;border:1px solid #ccc!important;}
+    .kpi.blue,.no-print-internal{display:none!important;}
+    .kpi-val.money,.money-cell,.grand-num,.dr-amount{color:#2d6a2d!important;}
+    .stbl .grand-row td{background:#2d1a0e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .day-block-header{background:#2d1a0e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .print-header{display:block!important;}
+    .kpi-grid{grid-template-columns:repeat(3,1fr)!important;}
+    @page{margin:1.5cm;size:A4;}
+  }
+  .print-header{display:none;margin-bottom:20px;padding-bottom:14px;border-bottom:3px solid #2d1a0e;}
+  .print-header-top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .print-header h1{font-family:'Playfair Display',serif;font-size:24px;color:#2d1a0e;}
+  .print-header .sub{font-size:13px;color:#666;margin-top:4px;}
+  .print-header .data-em{text-align:right;font-size:12px;color:#666;}
+  .print-header .data-em strong{display:block;font-size:15px;color:#2d1a0e;}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="login-box">
+    <div class="login-logo">📊</div>
+    <h1>Report Pastificio</h1>
+    <p>Accesso riservato al datore di lavoro</p>
+    <input type="password" class="pin-field" id="pin-input" maxlength="4" placeholder="••••" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter')tryLogin()">
+    <button class="login-btn" onclick="tryLogin()">🔓 Accedi</button>
+    <div class="pin-err" id="pin-err"></div>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+  <header>
+    <div class="hbrand">
+      <div class="hlogo">📊</div>
+      <div class="hbrand-text"><h1>Report Pastificio</h1><p>Pannello amministrazione</p></div>
+    </div>
+    <div class="hright">
+      <div class="live-pill no-print"><div class="live-dot"></div>Live</div>
+      <button class="btn-sm btn-print no-print" onclick="window.print()">🖨️ PDF</button>
+      <button class="btn-sm no-print" onclick="doLogout()">← Esci</button>
+    </div>
+  </header>
+  <div class="tabs-bar no-print" id="tabs-bar"></div>
+  <div class="main" id="main"><div class="loading">⏳ Connessione…</div></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBOFqkem40QWV_0uWmj7ivQMVJ55zDtwhs",
+  authDomain: "pastificio-e004f.firebaseapp.com",
+  databaseURL: "https://pastificio-e004f-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "pastificio-e004f",
+  storageBucket: "pastificio-e004f.firebasestorage.app",
+  messagingSenderId: "439505555806",
+  appId: "1:439505555806:web:7780ecf3f7fc77ca34ffcf"
+};
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+const PIN="1234";
+
+// PREZZARIO UFFICIALE — 16 voci
+const PREZZARIO={
+  "ETICHETTA/PREZZATURA":0.045,
+  "RISO BOX":0.068,
+  "LENTICCHIE BOX":0.068,
+  "RISO BOX + ETICHETTA":0.095,
+  "SPAGHETTI BOX + TIMBRATURA":0.095,
+  "PASTA BOX + PREZZO":0.095,
+  "SUGO BARATTOLO + PREZZO + RIMESSA NEL CARTONE":0.20,
+  "OLIVE BARATTOLO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE":0.25,
+  "BARATTOLO SUGO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE":0.25,
+  "BARATTOLO ETICHETTA + SPAGO + CAPPUCCIO + RIMESSA NEL CARTONE":0.25,
+  "SPEZIE BOX + TIMBRATURA":0.25,
+  "OLIO BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO":0.25,
+  "SALE BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO":0.25,
+  "SPEZIE CARTONE":0.35,
+  "VASO SPEZIE CARTONE":0.35,
+  "PASTA":0.50
+};
+
+function getPrezzoReale(r){
+  // Usa sempre il prezzario ufficiale come fonte di verità
+  if(PREZZARIO[r.descrizione]!==undefined) return PREZZARIO[r.descrizione];
+  return r.prezzo||0;
+}
+
+function generateMonths(){
+  const m=["NOVEMBRE 2025"],n=["GENNAIO","FEBBRAIO","MARZO","APRILE","MAGGIO","GIUGNO","LUGLIO","AGOSTO","SETTEMBRE","OTTOBRE","NOVEMBRE","DICEMBRE"];
+  n.forEach(x=>m.push(x+" 2026"));
+  const y=new Date().getFullYear();
+  if(y>2026)for(let yr=2027;yr<=y+1;yr++)n.forEach(x=>m.push(x+" "+yr));
+  return m;
+}
+function getCurrentMonth(){
+  const d=new Date(),n=["GENNAIO","FEBBRAIO","MARZO","APRILE","MAGGIO","GIUGNO","LUGLIO","AGOSTO","SETTEMBRE","OTTOBRE","NOVEMBRE","DICEMBRE"];
+  return n[d.getMonth()]+" "+d.getFullYear();
+}
+const MONTHS=generateMonths();
+let currentMonth='ALL',allData={},allGiornate={},customTypes=[];
+
+window.tryLogin=function(){
+  if(document.getElementById('pin-input').value===PIN){
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').style.display='block';
+    startApp();
+  }else{document.getElementById('pin-err').textContent='✕ PIN errato.';document.getElementById('pin-input').value='';}
+};
+window.doLogout=function(){
+  document.getElementById('login').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('pin-input').value='';
+};
+
+function startApp(){
+  onValue(ref(db,'customTypes'),snap=>{customTypes=snap.exists()?(snap.val()||[]):[];});
+  onValue(ref(db,'lavori'),snap=>{
+    allData={};MONTHS.forEach(m=>allData[m]=[]);
+    if(snap.exists()){
+      snap.forEach(ms=>{
+        const rawKey=ms.key;
+        const month=rawKey.replace(/_/g,' ');
+        console.log('Firebase key:', rawKey, '→ month:', month, 'records:', ms.size);
+        allData[month]=[];
+        ms.forEach(c=>{
+          const val=c.val();
+          if(val && typeof val==='object') allData[month].push({fbKey:c.key,...val});
+        });
+        allData[month].sort((a,b)=>(a.ts||0)-(b.ts||0));
+      });
+    }
+    console.log('allData keys:', Object.keys(allData).filter(k=>allData[k].length>0));
+    renderTabs();renderContent();
+  });
+  onValue(ref(db,'giornate'),snap=>{
+    allGiornate={};MONTHS.forEach(m=>allGiornate[m]={});
+    if(snap.exists()) snap.forEach(ms=>{
+      const month=ms.key.replace(/_/g,' ');
+      allGiornate[month]={};
+      ms.forEach(c=>{allGiornate[month][c.key]=c.val();});
+    });
+    renderTabs();renderContent();
+  });
+}
+
+function renderTabs(){
+  document.getElementById('tabs-bar').innerHTML=
+    `<div class="tab ${currentMonth==='ALL'?'active':''}" onclick="sw('ALL')">📊 Riepilogo</div>`+
+    MONTHS.map(m=>`<div class="tab ${currentMonth===m?'active':''}" onclick="sw('${m}')">${m}</div>`).join('');
+}
+window.sw=function(m){
+  currentMonth=m;renderTabs();renderContent();
+  setTimeout(()=>{const a=document.querySelector('.tab.active');if(a)a.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});},100);
+};
+
+function renderContent(){
+  const now=new Date().toLocaleDateString('it-IT');
+  const sub=currentMonth==='ALL'?'Riepilogo generale':currentMonth;
+  document.getElementById('main').innerHTML=
+    `<div class="print-header"><div class="print-header-top"><div><h1>🍝 Antico Pastificio Umbro</h1><div class="sub">Resoconto lavori – ${sub}</div></div><div class="data-em"><span>Data emissione</span><strong>${now}</strong></div></div></div>`+
+    (currentMonth==='ALL'?renderSummary():renderMonth(currentMonth));
+}
+
+function calcImp(rows){return rows.reduce((t,r)=>t+(r.quantita||0)*getPrezzoReale(r),0);}
+function sumQty(rows){return rows.reduce((a,r)=>a+(r.quantita||0),0);}
+function calcGs(month){
+  const g=allGiornate[month]||{};
+  const imp=calcImp(allData[month]||[]);
+  let oreP=0;Object.values(g).forEach(gd=>oreP+=(gd.persone||0)*(gd.ore||0));
+  return{oreP,euroOra:oreP>0?imp/oreP:0,n:Object.keys(g).length};
+}
+
+function renderSummary(){
+  const curM=getCurrentMonth();
+  const vis=MONTHS.filter(m=>(allData[m]||[]).length>0||MONTHS.indexOf(m)<=MONTHS.indexOf(curM));
+  let tI=0,tV=0,tO=0;
+  const mcs=vis.map(m=>{const rows=allData[m]||[],imp=calcImp(rows),gs=calcGs(m);tI+=imp;tV+=rows.length;tO+=gs.oreP;return{m,rows,imp,iva:imp*0.22,gs};});
+  const tIva=tI*0.22,tEO=tO>0?tI/tO:0;
+  return `
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Voci totali</div><div class="kpi-val">${tV}</div></div>
+    <div class="kpi green"><div class="kpi-label">Imponibile</div><div class="kpi-val money">€ ${tI.toFixed(2)}</div><div class="kpi-sub">+IVA € ${tIva.toFixed(2)}</div></div>
+    <div class="kpi rust"><div class="kpi-label">Totale c/IVA</div><div class="kpi-val money">€ ${(tI+tIva).toFixed(2)}</div></div>
+    <div class="kpi blue no-print-internal"><div class="kpi-label">€ / ora (media)</div><div class="kpi-val blue">${tEO>0?'€ '+tEO.toFixed(2):'—'}</div><div class="kpi-sub">${tO.toFixed(1)} ore·persona tot.</div></div>
+  </div>
+  <div class="months-grid">
+    ${mcs.map(mc=>`<div class="month-card ${!mc.rows.length?'empty-month':''}" onclick="sw('${mc.m}')">
+      <h4>${mc.m}</h4>
+      ${!mc.rows.length?'<p style="font-size:12px;color:var(--muted);font-style:italic;">Nessun lavoro</p>':''}
+      <div class="mc-total">
+        <div class="val">€ ${(mc.imp+mc.iva).toFixed(2)}</div>
+        <div class="sub no-print-internal">${mc.gs.euroOra>0?'€ '+mc.gs.euroOra.toFixed(2)+'/ora · '+mc.gs.oreP.toFixed(1)+'h':'nessun dato ore'}</div>
+      </div>
+    </div>`).join('')}
+  </div>
+  <div class="card">
+    <div class="card-hdr"><h3>Riepilogo per mese</h3></div>
+    <div class="tbl-wrap"><table class="stbl">
+      <thead><tr><th>Mese</th><th>Voci</th><th>Imponibile</th><th>IVA 22%</th><th>Totale</th><th class="no-print-internal">Ore·Persona</th><th class="no-print-internal">€/ora</th></tr></thead>
+      <tbody>${mcs.map(mc=>`<tr>
+        <td><strong>${mc.m}</strong></td><td>${mc.rows.length}</td>
+        <td>€ ${mc.imp.toFixed(2)}</td><td>€ ${mc.iva.toFixed(2)}</td>
+        <td class="money-cell">€ ${(mc.imp+mc.iva).toFixed(2)}</td>
+        <td class="no-print-internal">${mc.gs.oreP>0?`<span class="ora-badge">${mc.gs.oreP.toFixed(1)}h</span>`:'—'}</td>
+        <td class="no-print-internal">${mc.gs.euroOra>0?`<span class="euro-ora">€ ${mc.gs.euroOra.toFixed(2)}</span>`:'—'}</td>
+      </tr>`).join('')}</tbody>
+      <tfoot>
+        <tr><td colspan="2"><strong>TOTALI</strong></td><td>€ ${tI.toFixed(2)}</td><td>€ ${tIva.toFixed(2)}</td><td class="money-cell">€ ${(tI+tIva).toFixed(2)}</td><td class="no-print-internal"><span class="ora-badge">${tO.toFixed(1)}h</span></td><td class="no-print-internal"><span class="euro-ora">€ ${tEO.toFixed(2)}</span></td></tr>
+        <tr class="grand-row"><td colspan="7">TOTALE GENERALE c/IVA</td><td class="grand-num">€ ${(tI+tIva).toFixed(2)}</td></tr>
+      </tfoot>
+    </table></div>
+  </div>`;
+}
+
+function renderMonth(month){
+  const rows=allData[month]||[];
+  const imp=calcImp(rows),iva=imp*0.22;
+  const gs=calcGs(month);
+  const giornate=allGiornate[month]||{};
+  const workers=[...new Set(rows.filter(r=>r.lavoratore).map(r=>r.lavoratore))];
+
+  // riepilogo per articolo
+  const byArt={};
+  rows.forEach(r=>{
+    const k=r.descrizione;
+    if(!byArt[k])byArt[k]={qty:0,prezzo:getPrezzoReale(r),unita:r.unita||'pezzi'};
+    byArt[k].qty+=r.quantita||0;
+  });
+
+  // raggruppa per data per dettaglio
+  const byDate={};
+  rows.forEach(r=>{const d=r.data||'?';if(!byDate[d])byDate[d]=[];byDate[d].push(r);});
+  const dates=Object.keys(byDate).sort();
+
+  return `
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Voci</div><div class="kpi-val">${rows.length}</div></div>
+    <div class="kpi green"><div class="kpi-label">Imponibile</div><div class="kpi-val money">€ ${imp.toFixed(2)}</div><div class="kpi-sub">+IVA € ${iva.toFixed(2)}</div></div>
+    <div class="kpi rust"><div class="kpi-label">Totale c/IVA</div><div class="kpi-val money">€ ${(imp+iva).toFixed(2)}</div></div>
+    <div class="kpi blue no-print-internal"><div class="kpi-label">€ / ora</div><div class="kpi-val blue">${gs.euroOra>0?'€ '+gs.euroOra.toFixed(2):'—'}</div><div class="kpi-sub">${gs.oreP>0?gs.oreP.toFixed(1)+' ore·persona':'nessun dato ore'}</div></div>
+  </div>
+
+  <!-- GIORNATE — solo schermo -->
+  ${Object.keys(giornate).length>0?`
+  <div class="card no-print-internal">
+    <div class="card-hdr"><h3>👥 Giornate lavorative – ${month}</h3></div>
+    <div class="tbl-wrap"><table class="stbl">
+      <thead><tr><th>Data</th><th>Persone</th><th>Ore</th><th>Ore·Persona</th><th>Imponibile del giorno</th><th>€/ora</th></tr></thead>
+      <tbody>${Object.values(giornate).sort((a,b)=>a.data>b.data?1:-1).map(g=>{
+        const dr=rows.filter(r=>r.data===g.data);
+        const dI=calcImp(dr);
+        const oP=(g.persone||0)*(g.ore||0);
+        const eO=oP>0?dI/oP:0;
+        return `<tr style="background:#f0f7ff;">
+          <td><strong>${g.data}</strong></td><td>👷 ${g.persone}</td><td>⏱️ ${g.ore}h</td>
+          <td><span class="ora-badge">${oP.toFixed(1)}h</span></td>
+          <td>€ ${dI.toFixed(2)}</td>
+          <td>${eO>0?`<span class="euro-ora">€ ${eO.toFixed(2)}</span>`:'—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+      <tfoot><tr><td colspan="3"><strong>TOTALE</strong></td><td><span class="ora-badge">${gs.oreP.toFixed(1)}h</span></td><td>€ ${imp.toFixed(2)}</td><td>${gs.euroOra>0?`<span class="euro-ora">€ ${gs.euroOra.toFixed(2)}/ora</span>`:'—'}</td></tr></tfoot>
+    </table></div>
+  </div>`:''}
+
+  <!-- RIEPILOGO DETTAGLIATO — va nel PDF -->
+  <div class="card">
+    <div class="card-hdr"><h3>Riepilogo lavorazioni – ${month}</h3></div>
+    <div class="tbl-wrap"><table class="stbl">
+      <thead><tr>
+        <th>Cliente</th>
+        <th>N° Ordine</th>
+        <th>Articolo</th>
+        <th>Unità</th>
+        <th>Quantità</th>
+        <th>€/unità</th>
+        <th>Importo</th>
+      </tr></thead>
+      <tbody>${rows.map(r=>{
+        const pr=getPrezzoReale(r);
+        const qty=r.quantita||0;
+        return `<tr>
+          <td><strong>${r.cliente||'—'}</strong></td>
+          <td style="font-family:monospace;font-size:12px;">${r.ordine||'—'}</td>
+          <td>${r.descrizione}</td>
+          <td><span class="chip chip-${r.unita==='cartoni'?'cartoni':'pezzi'}">${r.unita==='cartoni'?'Cartoni':'Pezzi'}</span></td>
+          <td><strong>${qty.toLocaleString('it')}</strong></td>
+          <td>€ ${pr.toFixed(3)}</td>
+          <td class="money-cell">€ ${(qty*pr).toFixed(2)}</td>
+        </tr>`;
+      }).join('')}</tbody>
+      <tfoot>
+        <tr><td colspan="6"><strong>Imponibile</strong></td><td class="money-cell">€ ${imp.toFixed(2)}</td></tr>
+        <tr><td colspan="6">IVA 22%</td><td class="money-cell">€ ${iva.toFixed(2)}</td></tr>
+        <tr class="grand-row"><td colspan="6">TOTALE</td><td class="grand-num">€ ${(imp+iva).toFixed(2)}</td></tr>
+      </tfoot>
+    </table></div>
+  </div>
+
+  <!-- DETTAGLIO GIORNO PER GIORNO — va nel PDF -->
+  <div class="card">
+    <div class="card-hdr"><h3>Dettaglio per giornata – ${month}</h3></div>
+    <div style="padding:0;">
+      ${dates.map(date=>{
+        const dr=byDate[date];
+        const g=giornate[date.replace(/-/g,'')];
+        const dImp=calcImp(dr);
+        return `<div style="border-bottom:2px solid var(--border);page-break-inside:avoid;">
+          <div style="background:var(--ink);color:var(--gold-light);padding:8px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+            <strong style="font-size:14px;">📅 ${date}</strong>
+            <span style="font-size:11px;opacity:0.7;">${g?`👷 ${g.persone} persone · ⏱️ ${g.ore}h`:''}  · ${dr.length} lavorazioni · € ${dImp.toFixed(2)}</span>
+          </div>
+          <table class="stbl" style="margin:0;">
+            <thead><tr>
+              <th>Cliente</th>
+              <th>N° Ordine</th>
+              <th>Articolo</th>
+              <th>Unità</th>
+              <th>Qtà</th>
+              <th>€/unità</th>
+              <th>Importo</th>
+            </tr></thead>
+            <tbody>${dr.map(r=>{
+              const pr=getPrezzoReale(r);
+              const qty=r.quantita||0;
+              return `<tr>
+                <td><strong>${r.cliente||'—'}</strong></td>
+                <td style="font-family:monospace;font-size:11px;">${r.ordine||'—'}</td>
+                <td style="font-size:12px;">${r.descrizione}</td>
+                <td><span class="chip chip-${r.unita==='cartoni'?'cartoni':'pezzi'}">${r.unita==='cartoni'?'Cart.':'Pz'}</span></td>
+                <td><strong>${qty.toLocaleString('it')}</strong></td>
+                <td style="font-size:11px;">€ ${pr.toFixed(3)}</td>
+                <td class="money-cell">€ ${(qty*pr).toFixed(2)}</td>
+              </tr>`;
+            }).join('')}</tbody>
+            <tfoot>
+              <tr style="background:#fdf8f0;">
+                <td colspan="6" style="font-weight:700;">Totale giornata</td>
+                <td class="money-cell">€ ${dImp.toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+
+  <!-- PER LAVORATORE — solo schermo -->
+  ${workers.length?`<div class="card no-print-internal">
+    <div class="card-hdr"><h3>Per lavoratore – ${month}</h3></div>
+    <div class="tbl-wrap"><table class="stbl">
+      <thead><tr><th>Lavoratore</th><th>Voci</th><th>Quantità</th><th>Imponibile</th><th>Totale c/IVA</th></tr></thead>
+      <tbody>${workers.map(w=>{const wr=rows.filter(r=>r.lavoratore===w),wi=calcImp(wr);return`<tr><td><strong>👤 ${w}</strong></td><td>${wr.length}</td><td>${sumQty(wr).toLocaleString('it')}</td><td>€ ${wi.toFixed(2)}</td><td class="money-cell">€ ${(wi*1.22).toFixed(2)}</td></tr>`;}).join('')}</tbody>
+    </table></div>
+  </div>`:''}
+
+  <!-- DETTAGLIO PER DATA — solo schermo -->
+  <div class="card no-print-internal">
+    <div class="card-hdr">
+      <h3>Dettaglio per giornata – ${month}</h3>
+    </div>
+    <div class="filter-row">
+      <select id="worker-filter" onchange="applyFilter()"><option value="">Tutti i lavoratori</option>${workers.map(w=>`<option value="${w}">👤 ${w}</option>`).join('')}</select>
+      <input type="text" id="search-input" placeholder="🔍 Cerca cliente, articolo…" oninput="applyFilter()">
+    </div>
+    ${!rows.length?`<div class="empty"><div class="ei">📭</div><p>Nessun lavoro per ${month}</p></div>`:`
+    <div id="detail-container" style="padding:12px;">
+      ${dates.map(date=>{
+        const dr=byDate[date];
+        const g=giornate[date.replace(/-/g,'')];
+        const meta=g?`${g.persone} persone · ${g.ore}h · tot. ${(g.persone*g.ore).toFixed(1)}h`:'⚠️ ore mancanti';
+        return `<div class="day-block">
+          <div class="day-block-header">
+            <strong>📅 ${date}</strong>
+            <span class="day-block-meta">👷 ${meta} · ${dr.length} lavorazioni</span>
+          </div>
+          <div class="day-block-body">
+            ${dr.map(r=>{
+              const pr=getPrezzoReale(r);
+              return `<div class="day-row" data-worker="${r.lavoratore||''}" data-q="${((r.cliente||'')+' '+(r.descrizione||'')+' '+(r.ordine||'')).toLowerCase()}">
+                <div class="dr-main">
+                  ${r.cliente?`<div class="dr-cliente">🏢 ${r.cliente}</div>`:''}
+                  <div class="dr-desc">${r.descrizione}<span class="chip chip-${r.unita==='cartoni'?'cartoni':'pezzi'}">${r.unita==='cartoni'?'Cartoni':'Pezzi'}</span></div>
+                  <div class="dr-meta">${r.ordine?'N° '+r.ordine+' · ':''} 👤 ${r.lavoratore||'—'}${r.note?' · 📝 '+r.note:''}</div>
+                </div>
+                <div class="dr-right">
+                  <div class="dr-qty">${Number(r.quantita||0).toLocaleString('it')} ${r.unita==='cartoni'?'cartoni':'pz'}</div>
+                  <div class="dr-amount">€ ${((r.quantita||0)*pr).toFixed(2)}</div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`}
+  </div>`;
+}
+
+window.applyFilter=function(){
+  const w=document.getElementById('worker-filter')?.value||'';
+  const q=(document.getElementById('search-input')?.value||'').toLowerCase();
+  document.querySelectorAll('#detail-container .day-row').forEach(r=>{
+    r.style.display=(!w||r.dataset.worker===w)&&(!q||r.dataset.q.includes(q))?'':'none';
+  });
+};
+</script>
+</body>
+</html>
