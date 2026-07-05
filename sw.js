@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pastificio-v5';
+﻿const CACHE_NAME = 'pastificio-v6';
 const ASSETS = [
   '/Lavori-Antico-Pastificio-Umbro/lavori_pastificio.html',
   '/Lavori-Antico-Pastificio-Umbro/report_pastificio.html'
@@ -21,12 +21,12 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Firebase e Google Fonts — sempre dalla rete
+  // Firebase e Google Fonts â€” sempre dalla rete
   if (e.request.url.includes('firebase') || e.request.url.includes('googleapis')) {
     e.respondWith(fetch(e.request));
     return;
   }
-  // Tutto il resto — rete prima, poi cache
+  // Tutto il resto â€” rete prima, poi cache
   e.respondWith(
     fetch(e.request).catch(() => caches.match(e.request))
   );

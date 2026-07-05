@@ -216,12 +216,6 @@
               <option value="PASTA|0.50|cartoni">PASTA ✦ a cartoni</option>
               <option value="SPAGHETTI COMBINO|0.50|cartoni">SPAGHETTI COMBINO ✦ a cartoni</option>
             </optgroup>
-            <optgroup label="── Sughi e Barattoli ──">
-              <option value="SUGO BARATTOLO + PREZZO + RIMESSA NEL CARTONE|0.20|pezzi">SUGO BARATTOLO + PREZZO + RIMESSA NEL CARTONE</option>
-              <option value="OLIVE BARATTOLO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE|0.25|pezzi">OLIVE BARATTOLO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE</option>
-              <option value="BARATTOLO SUGO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE|0.25|pezzi">BARATTOLO SUGO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE</option>
-              <option value="BARATTOLO ETICHETTA + SPAGO + CAPPUCCIO + RIMESSA NEL CARTONE|0.25|pezzi">BARATTOLO ETICHETTA + SPAGO + CAPPUCCIO + RIMESSA NEL CARTONE</option>
-            </optgroup>
             <optgroup label="── Spezie ──">
               <option value="SPEZIE BOX + TIMBRATURA|0.25|pezzi">SPEZIE BOX + TIMBRATURA</option>
               <option value="SPEZIE CARTONE|0.35|cartoni">SPEZIE CARTONE ✦ a cartoni</option>
@@ -243,7 +237,6 @@
           <div class="custom-tag-row" id="custom-tags"></div>
           <div class="add-tag-row">
             <input class="add-tag-input" id="new-tag-input" placeholder="Nome articolo…" maxlength="60" onkeydown="if(event.key==='Enter')addCustomTag()">
-            <input class="add-tag-price" id="new-tag-price" type="number" step="0.001" min="0" placeholder="€/cad">
             <button class="add-tag-btn" onclick="addCustomTag()">+ Salva</button>
           </div>
         </div>
@@ -382,11 +375,11 @@ window.selectCustomTipo=function(id){
 };
 window.addCustomTag=function(){
   const n=document.getElementById('new-tag-input').value.trim();
-  const p=parseFloat(document.getElementById('new-tag-price').value)||0;
+  const p=0; // il prezzo lo assegna l'amministrazione (voce "da prezzare" nel report)
   if(!n){toast('⚠️ Inserisci il nome','err');return;}
   if(!p){toast('⚠️ Inserisci il prezzo','err');return;}
   customTypes.push({id:'ct'+Date.now(),label:n,prezzo:p,unita:'pezzi',selected:false});
-  document.getElementById('new-tag-input').value='';document.getElementById('new-tag-price').value='';
+  document.getElementById('new-tag-input').value='';
   set(ref(db,'customTypes'),customTypes);renderCustomTags();toast('✨ Articolo salvato!','ok');
 };
 window.removeCustomTag=function(id){

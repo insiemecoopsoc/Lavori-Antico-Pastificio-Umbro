@@ -462,7 +462,7 @@ function renderMonth(month){
         <td><strong>${desc}</strong></td>
         <td><span class="chip chip-${d.unita==='cartoni'?'cartoni':'pezzi'}">${d.unita==='cartoni'?'Cartoni':'Pezzi'}</span></td>
         <td><strong>${d.qty.toLocaleString('it')}</strong></td>
-        <td>€ ${d.prezzo.toFixed(3)}</td>
+        <td>${d.prezzo>0?'€ '+d.prezzo.toFixed(3):'<span style="background:#c0392b;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;">DA PREZZARE</span>'}</td>
         <td class="money-cell">€ ${(d.qty*d.prezzo).toFixed(2)}</td>
       </tr>`).join('')}</tbody>
       <tfoot>
