@@ -371,7 +371,7 @@ function sumQty(rows){return rows.reduce((a,r)=>a+(r.quantita||0),0);}
 function calcGs(month){
   const g=allGiornate[month]||{};
   const imp=calcImp(allData[month]||[]);
-  let oreP=0;Object.values(g).forEach(gd=>oreP+=(gd.persone||0)*(gd.ore||0));
+  let oreP=0;Object.values(g).forEach(gd=>oreP+=(gd.oreTotali?(gd.ore||0):(gd.persone||0)*(gd.ore||0)));
   return{oreP,euroOra:oreP>0?imp/oreP:0,n:Object.keys(g).length};
 }
 
@@ -453,7 +453,7 @@ function renderMonth(month){
     <div class="kpi"><div class="kpi-label">Voci</div><div class="kpi-val">${rows.length}</div></div>
     <div class="kpi green"><div class="kpi-label">Imponibile</div><div class="kpi-val money">€ ${imp.toFixed(2)}</div><div class="kpi-sub">+IVA € ${iva.toFixed(2)}</div></div>
     <div class="kpi rust"><div class="kpi-label">Totale c/IVA</div><div class="kpi-val money">€ ${(imp+iva).toFixed(2)}</div></div>
-    <div class="kpi blue no-print-internal"><div class="kpi-label">€ / ora</div><div class="kpi-val blue">${gs.euroOra>0?'€ '+gs.euroOra.toFixed(2):'—'}</div><div class="kpi-sub">${gs.oreP>0?gs.oreP.toFixed(1)+' ore·persona':'nessun dato ore'}</div></div>
+    <div class="kpi blue no-print-internal"><div class="kpi-label">€ / ora</div><div class="kpi-val blue">${gs.euroOra>0?'€ '+gs.euroOra.toFixed(2):'—'}</div><div class="kpi-sub">${gs.oreP>0?gs.oreP.toFixed(1)+' ore squadra':'nessun dato ore'}</div></div>
   </div>
 
   <!-- GIORNATE — solo schermo -->
@@ -461,20 +461,20 @@ function renderMonth(month){
   <div class="card no-print-internal">
     <div class="card-hdr"><h3>👥 Giornate lavorative – ${month}</h3></div>
     <div class="tbl-wrap"><table class="stbl">
-      <thead><tr><th>Data</th><th>Persone</th><th>Ore</th><th>Ore·Persona</th><th>Imponibile del giorno</th><th>€/ora</th></tr></thead>
+      <thead><tr><th>Data</th><th>Persone</th><th>Ore totali squadra</th><th>Imponibile del giorno</th><th>€/ora</th></tr></thead>
       <tbody>${Object.values(giornate).sort((a,b)=>a.data>b.data?1:-1).map(g=>{
         const dr=rows.filter(r=>r.data===g.data);
         const dI=calcImp(dr);
-        const oP=(g.persone||0)*(g.ore||0);
+        const oP=g.oreTotali?(g.ore||0):(g.persone||0)*(g.ore||0);
         const eO=oP>0?dI/oP:0;
         return `<tr style="background:#f0f7ff;">
-          <td><strong>${g.data}</strong></td><td>👷 ${g.persone}</td><td>⏱️ ${g.ore}h</td>
-          <td><span class="ora-badge">${oP.toFixed(1)}h</span></td>
+          <td><strong>${g.data}</strong></td><td>👷 ${g.persone}</td>
+          <td><span class="ora-badge">${oP.toFixed(2)}h</span></td>
           <td>€ ${dI.toFixed(2)}</td>
           <td>${eO>0?`<span class="euro-ora">€ ${eO.toFixed(2)}</span>`:'—'}</td>
         </tr>`;
       }).join('')}</tbody>
-      <tfoot><tr><td colspan="3"><strong>TOTALE</strong></td><td><span class="ora-badge">${gs.oreP.toFixed(1)}h</span></td><td>€ ${imp.toFixed(2)}</td><td>${gs.euroOra>0?`<span class="euro-ora">€ ${gs.euroOra.toFixed(2)}/ora</span>`:'—'}</td></tr></tfoot>
+      <tfoot><tr><td colspan="2"><strong>TOTALE</strong></td><td><span class="ora-badge">${gs.oreP.toFixed(2)}h</span></td><td>€ ${imp.toFixed(2)}</td><td>${gs.euroOra>0?`<span class="euro-ora">€ ${gs.euroOra.toFixed(2)}/ora</span>`:'—'}</td></tr></tfoot>
     </table></div>
   </div>`:''}
 
