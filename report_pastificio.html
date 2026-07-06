@@ -176,7 +176,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBOFqkem40QWV_0uWmj7ivQMVJ55zDtwhs",
@@ -212,9 +212,14 @@ const PREZZARIO={
   "SPAGHETTI COMBINO":0.50
 };
 
+// prezzi assegnati dall'amministrazione agli articoli delle operatrici (nodo Firebase)
+let prezziCustom={};
+const chiavePulita=s=>String(s).replace(/[.#$/\[\]]/g,'_');
+
 function getPrezzoReale(r){
   // Usa sempre il prezzario ufficiale come fonte di verità
   if(PREZZARIO[r.descrizione]!==undefined) return PREZZARIO[r.descrizione];
+  if(prezziCustom[chiavePulita(r.descrizione)]!==undefined) return prezziCustom[chiavePulita(r.descrizione)];
   return r.prezzo||0;
 }
 
@@ -252,6 +257,7 @@ if('serviceWorker' in navigator){
 
 function startApp(){
   onValue(ref(db,'customTypes'),snap=>{customTypes=snap.exists()?(snap.val()||[]):[];});
+  onValue(ref(db,'prezziCustom'),snap=>{prezziCustom=snap.exists()?(snap.val()||{}):{};renderContent();});
   onValue(ref(db,'lavori'),snap=>{
     allData={};MONTHS.forEach(m=>allData[m]=[]);
     if(snap.exists()){
@@ -281,6 +287,66 @@ function startApp(){
   });
 }
 
+/* ── GESTIONE ARTICOLI DELLE OPERATRICI (rinomina + prezzo, solo admin, non stampata) ── */
+function articoliCustom(){
+  const nomi=new Set();
+  Object.values(allData).forEach(rows=>rows.forEach(r=>{
+    if(r.descrizione && PREZZARIO[r.descrizione]===undefined) nomi.add(r.descrizione);
+  }));
+  (customTypes||[]).forEach(ct=>{ if(ct && ct.label && PREZZARIO[ct.label]===undefined) nomi.add(ct.label); });
+  return [...nomi].sort();
+}
+function renderGestioneArticoli(){
+  const nomi=articoliCustom();
+  if(!nomi.length) return '';
+  return `<div class="card no-print-internal" style="border:2px dashed #c99a1a;">
+    <div class="card-hdr"><h3>🛠 Articoli inseriti dalle operatrici</h3></div>
+    <div style="padding:10px 16px;">
+      ${nomi.map(n=>{
+        const p=prezziCustom[chiavePulita(n)];
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eee;flex-wrap:wrap;">
+          <strong style="flex:1;min-width:180px;">${n}</strong>
+          ${p!==undefined?`<span style="font-weight:700;">€ ${(+p).toFixed(3)}</span>`:'<span style="background:#c0392b;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;">DA PREZZARE</span>'}
+          <button onclick="rinominaArticolo('${n.replace(/'/g,"\\'")}')" style="padding:6px 12px;border:1px solid #c99a1a;background:#fff;border-radius:8px;cursor:pointer;font-weight:600;">✏️ Rinomina</button>
+          <button onclick="prezzaArticolo('${n.replace(/'/g,"\\'")}')" style="padding:6px 12px;border:none;background:#2d5a3d;color:#fff;border-radius:8px;cursor:pointer;font-weight:600;">€ Prezzo</button>
+        </div>`;
+      }).join('')}
+      <p style="font-size:11px;color:#888;margin-top:8px;">Il nuovo nome viene applicato a tutte le registrazioni, di tutti i mesi. Il prezzo vale per tutte le quantità di quell'articolo.</p>
+    </div>
+  </div>`;
+}
+window.rinominaArticolo=async function(vecchio){
+  const nuovo=(prompt('Nuovo nome per "'+vecchio+'":',vecchio)||'').trim().toUpperCase();
+  if(!nuovo||nuovo===vecchio) return;
+  const mods={};
+  Object.entries(allData).forEach(([month,rows])=>{
+    const mk=month.replace(/ /g,'_');
+    rows.forEach(r=>{ if(r.descrizione===vecchio) mods['lavori/'+mk+'/'+r.fbKey+'/descrizione']=nuovo; });
+  });
+  try{
+    if(Object.keys(mods).length) await update(ref(db),mods);
+    const ct=(customTypes||[]).map(c=>c&&c.label===vecchio?{...c,label:nuovo}:c);
+    await set(ref(db,'customTypes'),ct);
+    const pk=chiavePulita(vecchio);
+    if(prezziCustom[pk]!==undefined){
+      const np={...prezziCustom};np[chiavePulita(nuovo)]=np[pk];delete np[pk];
+      await set(ref(db,'prezziCustom'),np);
+    }
+    alert('✅ Rinominato in "'+nuovo+'" ('+Object.keys(mods).length+' registrazioni aggiornate)');
+  }catch(e){alert('Errore: '+e.message);}
+};
+window.prezzaArticolo=async function(nome){
+  const attuale=prezziCustom[chiavePulita(nome)];
+  const inp=prompt('Prezzo per "'+nome+'" (€ per pezzo/cartone):',attuale!==undefined?String(attuale).replace('.',','):'');
+  if(inp===null) return;
+  const p=parseFloat(String(inp).replace(',','.'));
+  if(isNaN(p)||p<0){alert('Prezzo non valido');return;}
+  try{
+    await set(ref(db,'prezziCustom/'+chiavePulita(nome)),p);
+    alert('✅ Prezzo impostato: € '+p.toFixed(3));
+  }catch(e){alert('Errore: '+e.message);}
+};
+
 function renderTabs(){
   document.getElementById('tabs-bar').innerHTML=
     `<div class="tab ${currentMonth==='ALL'?'active':''}" onclick="sw('ALL')">📊 Riepilogo</div>`+
@@ -296,6 +362,7 @@ function renderContent(){
   const sub=currentMonth==='ALL'?'Riepilogo generale':currentMonth;
   document.getElementById('main').innerHTML=
     `<div class="print-header"><div class="print-header-top"><div><h1>🍝 Antico Pastificio Umbro</h1><div class="sub">Resoconto lavori – ${sub}</div></div><div class="data-em"><span>Data emissione</span><strong>${now}</strong></div></div></div>`+
+    renderGestioneArticoli()+
     (currentMonth==='ALL'?renderSummary():renderMonth(currentMonth));
 }
 

@@ -173,7 +173,7 @@
           <div class="giornata-grid">
             <div class="form-group"><label>📅 Data</label><input type="date" id="g-data"></div>
             <div class="form-group"><label>👷 N° Persone</label><input type="number" id="g-persone" min="1" placeholder="es. 3" inputmode="numeric"></div>
-            <div class="form-group"><label>⏱️ Ore lavorate</label><input type="number" id="g-ore" min="0.5" step="0.5" placeholder="es. 8" inputmode="decimal"></div>
+            <div class="form-group"><label>⏱️ Ore lavorate</label><div style="display:flex;gap:6px;"><input type="number" id="g-ore" min="0" step="1" placeholder="ore" inputmode="numeric" style="flex:1;min-width:70px;"><select id="g-min" style="flex:1;min-width:90px;padding:10px;border:2px solid #ddd;border-radius:10px;font-size:15px;background:#fff;font-family:inherit;"><option value="0">+ 0 min</option><option value="15">+ 15 min</option><option value="30">+ 30 min</option><option value="45">+ 45 min</option></select></div></div>
           </div>
           <button class="btn-giornata" onclick="saveGiornata()">💾 Salva dati giornata</button>
         </div>
@@ -307,6 +307,49 @@ const PREZZARIO = [
   {desc:"SPAGHETTI COMBINO",             prezzo:0.50, unita:"cartoni"},
 ];
 
+/* ── PONTE RENDICONTAZIONE (Supabase) ─ ogni lavorazione salvata qui
+      finisce da sola nel riepilogo mensile dell'hub: niente doppi inserimenti ── */
+const RB_URL="https://hfpybsppfnxkmbykvlta.supabase.co/rest/v1/";
+const RB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmcHlic3BwZm54a21ieWt2bHRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NzYxNTUsImV4cCI6MjA5ODA1MjE1NX0.ESJl86v1UyMDEqAYCQjnTwE1a6W-L04JfHcPNMl_z-k";
+const RB_HDRS={apikey:RB_KEY,Authorization:"Bearer "+RB_KEY,"Content-Type":"application/json"};
+let rbCache=null;
+async function rbSetup(){
+  if(rbCache)return rbCache;
+  const cl=await (await fetch(RB_URL+"rend_clienti_pub?select=*",{headers:RB_HDRS})).json();
+  const past=cl.find(c=>c.nome==="ANTICO PASTIFICIO");
+  if(!past)throw new Error("cliente non trovato");
+  const voci=await (await fetch(RB_URL+"rend_voci_pub?select=*&cliente_id=eq."+past.id,{headers:RB_HDRS})).json();
+  rbCache={clienteId:past.id,voci};
+  return rbCache;
+}
+async function ponteRend(fbKey,rec){
+  try{
+    const rb=await rbSetup();
+    let voce=rb.voci.find(v=>v.voce===rec.descrizione);
+    let nota="[P"+fbKey+"]";
+    if(!voce){voce=rb.voci.find(v=>v.voce==="ALTRO PASTIFICIO");nota+=" "+rec.descrizione;}
+    if(!voce)return;
+    const r=await fetch(RB_URL+"rend_attivita",{method:"POST",headers:RB_HDRS,body:JSON.stringify({
+      data:rec.data,cliente_id:rb.clienteId,voce_id:voce.id,quantita:rec.quantita,
+      operatore:rec.operatore||"Pastificio",origine:"pastificio",note:nota})});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+  }catch(e){
+    const q=JSON.parse(localStorage.getItem("rbQueue")||"[]");
+    q.push({fbKey,rec});localStorage.setItem("rbQueue",JSON.stringify(q));
+  }
+}
+async function ponteRendElimina(fbKey){
+  try{await fetch(RB_URL+"rend_attivita?origine=eq.pastificio&note=like."+encodeURIComponent("[P"+fbKey+"]*"),{method:"DELETE",headers:RB_HDRS});}catch(e){}
+}
+async function rbSvuota(){
+  const q=JSON.parse(localStorage.getItem("rbQueue")||"[]");
+  if(!q.length)return;
+  localStorage.setItem("rbQueue","[]");
+  for(const it of q)await ponteRend(it.fbKey,it.rec);
+}
+window.addEventListener("online",rbSvuota);
+setTimeout(rbSvuota,4000);
+
 function generateMonths(){
   const m=["NOVEMBRE 2025"],n=["GENNAIO","FEBBRAIO","MARZO","APRILE","MAGGIO","GIUGNO","LUGLIO","AGOSTO","SETTEMBRE","OTTOBRE","NOVEMBRE","DICEMBRE"];
   n.forEach(x=>m.push(x+" 2026"));
@@ -393,11 +436,26 @@ function renderCustomTags(){
   c.innerHTML=customTypes.map(ct=>`<div class="custom-tag ${ct.selected?'active-tag':''}" onclick="selectCustomTipo('${ct.id}')">✦ ${ct.label}<span class="rm" onclick="event.stopPropagation();removeCustomTag('${ct.id}')"> ×</span></div>`).join('');
 }
 
-// GIORNATA
+// GIORNATA — ore + minuti (a scatti di 15)
+function leggiOre(){
+  const h=parseInt(document.getElementById('g-ore').value)||0;
+  const m=parseInt(document.getElementById('g-min').value)||0;
+  return h+m/60;
+}
+function scriviOre(dec){
+  const h=Math.floor(dec||0);
+  let m=Math.round(((dec||0)-h)*60/15)*15; if(m>=60)m=45;
+  document.getElementById('g-ore').value=h||'';
+  document.getElementById('g-min').value=String(m);
+}
+function fmtOre(dec){
+  const h=Math.floor(dec||0), m=Math.round(((dec||0)-h)*60);
+  return m>0 ? h+'h '+m+"'" : h+'h';
+}
 window.saveGiornata=async function(){
   const data=document.getElementById('g-data').value;
   const persone=parseInt(document.getElementById('g-persone').value)||0;
-  const ore=parseFloat(document.getElementById('g-ore').value)||0;
+  const ore=leggiOre();
   if(!data){toast('⚠️ Inserisci la data','err');return;}
   if(persone<=0){toast('⚠️ Inserisci il numero di persone','err');return;}
   if(ore<=0){toast('⚠️ Inserisci le ore','err');return;}
@@ -414,8 +472,8 @@ function renderGiornataInfo(data){
     document.getElementById('giornata-info').innerHTML=`<div class="giornata-banner">
       <div class="gb-item">📅 <strong>${g.data}</strong></div>
       <div class="gb-item">👷 <strong>${g.persone} persone</strong></div>
-      <div class="gb-item">⏱️ <strong>${g.ore}h</strong></div>
-      <div class="gb-item">⏰ <strong>Tot: ${(g.persone*g.ore).toFixed(1)}h</strong></div>
+      <div class="gb-item">⏱️ <strong>${fmtOre(g.ore)}</strong></div>
+      <div class="gb-item">⏰ <strong>Tot: ${fmtOre(g.persone*g.ore)}</strong></div>
       <button class="gb-edit" onclick="editGiornata('${data}')">✏️ Modifica</button>
     </div>`;
   } else {
@@ -425,13 +483,13 @@ function renderGiornataInfo(data){
 }
 window.editGiornata=function(data){
   const g=giornate[(data||'').replace(/-/g,'')];
-  if(g){document.getElementById('g-data').value=g.data;document.getElementById('g-persone').value=g.persone;document.getElementById('g-ore').value=g.ore;}
+  if(g){document.getElementById('g-data').value=g.data;document.getElementById('g-persone').value=g.persone;scriviOre(g.ore);}
   document.getElementById('giornata-box').style.display='block';
   document.getElementById('giornata-info').style.display='none';
 };
 document.addEventListener('change',function(e){
   if(e.target.id==='f-data')renderGiornataInfo(e.target.value);
-  if(e.target.id==='g-data'){const g=giornate[(e.target.value||'').replace(/-/g,'')];if(g){document.getElementById('g-persone').value=g.persone;document.getElementById('g-ore').value=g.ore;}}
+  if(e.target.id==='g-data'){const g=giornate[(e.target.value||'').replace(/-/g,'')];if(g){document.getElementById('g-persone').value=g.persone;scriviOre(g.ore);}}
 });
 
 // TABS
@@ -551,7 +609,8 @@ window.addRecord=async function(){
   const cartoni=unita==='pezzi'?(parseInt(document.getElementById('f-cartoni').value)||0):0;
   const btn=document.getElementById('btn-save');btn.disabled=true;btn.textContent='⏳ Salvataggio…';
   try{
-    await push(ref(db,'lavori/'+currentMonth.replace(/ /g,'_')),{data,cliente,lavoratore:workerName,descrizione,prezzo,unita,quantita:qty,cartoni,ordine,note,ts:Date.now()});
+    const nr=await push(ref(db,'lavori/'+currentMonth.replace(/ /g,'_')),{data,cliente,lavoratore:workerName,descrizione,prezzo,unita,quantita:qty,cartoni,ordine,note,ts:Date.now()});
+    ponteRend(nr.key,{data,descrizione,quantita:qty,operatore:workerName});
     // reset — mantieni data e cliente per inserimenti multipli della stessa giornata
     document.getElementById('f-articolo').value='';
     document.getElementById('f-ordine').value='';
@@ -575,7 +634,7 @@ window.addRecord=async function(){
 window.deleteRecord=async function(fbKey){
   if(!fbKey){toast('❌ Impossibile eliminare','err');return;}
   if(!confirm('Eliminare questa lavorazione?'))return;
-  try{await remove(ref(db,'lavori/'+currentMonth.replace(/ /g,'_')+'/'+fbKey));toast('🗑️ Eliminato','');}
+  try{await remove(ref(db,'lavori/'+currentMonth.replace(/ /g,'_')+'/'+fbKey));ponteRendElimina(fbKey);toast('🗑️ Eliminato','');}
   catch(e){showFbError();toast('❌ Errore eliminazione','err');}
 };
 
