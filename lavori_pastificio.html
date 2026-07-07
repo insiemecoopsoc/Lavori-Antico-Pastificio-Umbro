@@ -318,7 +318,7 @@ const RB_HDRS={apikey:RB_KEY,Authorization:"Bearer "+RB_KEY,"Content-Type":"appl
 let rbCache=null;
 async function rbSetup(){
   if(rbCache)return rbCache;
-  const cl=await (await fetch(RB_URL+"rend_clienti_pub?select=*",{headers:RB_HDRS})).json();
+  const cl=await (await fetch(RB_URL+"rend_clienti_all?select=*",{headers:RB_HDRS})).json();
   const past=cl.find(c=>c.nome==="ANTICO PASTIFICIO");
   if(!past)throw new Error("cliente non trovato");
   const voci=await (await fetch(RB_URL+"rend_voci_pub?select=*&cliente_id=eq."+past.id,{headers:RB_HDRS})).json();
