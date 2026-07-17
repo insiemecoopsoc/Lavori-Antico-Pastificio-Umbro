@@ -423,7 +423,6 @@ window.addCustomTag=function(){
   const n=document.getElementById('new-tag-input').value.trim();
   const p=0; // il prezzo lo assegna l'amministrazione (voce "da prezzare" nel report)
   if(!n){toast('⚠️ Inserisci il nome','err');return;}
-  if(!p){toast('⚠️ Inserisci il prezzo','err');return;}
   customTypes.push({id:'ct'+Date.now(),label:n,prezzo:p,unita:'pezzi',selected:false});
   document.getElementById('new-tag-input').value='';
   set(ref(db,'customTypes'),customTypes);renderCustomTags();toast('✨ Articolo salvato!','ok');
