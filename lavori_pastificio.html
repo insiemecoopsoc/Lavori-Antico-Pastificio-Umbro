@@ -387,6 +387,21 @@ window.changeName=function(){
 };
 
 // ARTICOLO
+// i "nuovi articoli" creati dalle operatrici compaiono anche nella tendina principale
+function renderCustomOptions(){
+  const sel=document.getElementById('f-articolo');if(!sel)return;
+  const prev=sel.value;
+  const old=document.getElementById('og-custom');if(old)old.remove();
+  if(customTypes.length){
+    const og=document.createElement('optgroup');og.id='og-custom';og.label='── Nuovi articoli (creati da voi) ──';
+    customTypes.forEach(ct=>{
+      const o=document.createElement('option');o.value='ctid:'+ct.id;o.textContent='✦ '+ct.label;og.appendChild(o);
+    });
+    const altro=[...sel.querySelectorAll('optgroup')].find(g=>g.label.includes('Altro'));
+    sel.insertBefore(og,altro||null);
+  }
+  if([...sel.options].some(o=>o.value===prev))sel.value=prev;
+}
 window.onArticoloChange=function(){
   const val=document.getElementById('f-articolo').value;
   const hint=document.getElementById('unita-hint');
@@ -397,6 +412,18 @@ window.onArticoloChange=function(){
   if(!val){hint.className='unita-hint';hint.textContent='';cSec.style.display='none';currentUnita='pezzi';return;}
   if(val==='__custom__'){cSec.style.display='block';hint.className='unita-hint unita-pezzi show';hint.textContent='✨ Seleziona o crea articolo personalizzato';currentUnita='pezzi';return;}
   cSec.style.display='none';
+  if(val.startsWith('ctid:')){
+    selectedCustom=customTypes.find(c=>c.id===val.slice(5))||null;
+    currentUnita=selectedCustom?(selectedCustom.unita||'pezzi'):'pezzi';
+    if(currentUnita==='cartoni'){
+      hint.className='unita-hint unita-cartoni show';hint.textContent='📦 Questo articolo si conteggia a CARTONI';
+      qLbl.textContent='📦 Numero Cartoni';cGrp.style.display='none';
+    } else {
+      hint.className='unita-hint unita-pezzi show';hint.textContent='🔢 Questo articolo si conteggia a PEZZI';
+      qLbl.textContent='🔢 Numero Pezzi';cGrp.style.display='block';
+    }
+    return;
+  }
   const parts=val.split('|');
   currentUnita=parts[2]||'pezzi';
   if(currentUnita==='cartoni'){
@@ -423,9 +450,15 @@ window.addCustomTag=function(){
   const n=document.getElementById('new-tag-input').value.trim();
   const p=0; // il prezzo lo assegna l'amministrazione (voce "da prezzare" nel report)
   if(!n){toast('⚠️ Inserisci il nome','err');return;}
-  customTypes.push({id:'ct'+Date.now(),label:n,prezzo:p,unita:'pezzi',selected:false});
+  const nuovoId='ct'+Date.now();
+  customTypes.push({id:nuovoId,label:n,prezzo:p,unita:'pezzi',selected:false});
   document.getElementById('new-tag-input').value='';
-  set(ref(db,'customTypes'),customTypes);renderCustomTags();toast('✨ Articolo salvato!','ok');
+  set(ref(db,'customTypes'),customTypes);renderCustomTags();
+  // seleziona subito il nuovo articolo nella tendina e chiudi la sezione personalizzati
+  renderCustomOptions();
+  document.getElementById('f-articolo').value='ctid:'+nuovoId;
+  window.onArticoloChange();
+  toast('✨ Articolo aggiunto alla lista!','ok');
 };
 window.removeCustomTag=function(id){
   customTypes=customTypes.filter(ct=>ct.id!==id);
@@ -433,6 +466,7 @@ window.removeCustomTag=function(id){
   set(ref(db,'customTypes'),customTypes);renderCustomTags();
 };
 function renderCustomTags(){
+  renderCustomOptions();
   const c=document.getElementById('custom-tags');if(!c)return;
   if(!customTypes.length){c.innerHTML='<span style="font-size:12px;color:#bbb;font-style:italic;">Nessun articolo personalizzato</span>';return;}
   c.innerHTML=customTypes.map(ct=>`<div class="custom-tag ${ct.selected?'active-tag':''}" onclick="selectCustomTipo('${ct.id}')">✦ ${ct.label}<span class="rm" onclick="event.stopPropagation();removeCustomTag('${ct.id}')"> ×</span></div>`).join('');
@@ -603,7 +637,7 @@ window.addRecord=async function(){
   if(qty<=0){toast('⚠️ Inserisci la quantità','err');return;}
   const note=document.getElementById('f-note').value.trim();
   let descrizione,prezzo,unita;
-  if(val==='__custom__'){
+  if(val==='__custom__'||val.startsWith('ctid:')){
     if(!selectedCustom){toast('⚠️ Seleziona un articolo personalizzato','err');return;}
     descrizione=selectedCustom.label;prezzo=selectedCustom.prezzo||0;unita=selectedCustom.unita||'pezzi';
   } else {
