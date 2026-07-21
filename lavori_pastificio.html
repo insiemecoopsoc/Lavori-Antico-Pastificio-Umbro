@@ -117,6 +117,8 @@
   .worker-tag{display:inline-flex;align-items:center;gap:4px;background:#f0f4ff;color:#3b5bdb;font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;}
   .mine-tag{background:#e8f5e9!important;color:#2e7d32!important;}
   .del-btn{width:32px;height:32px;background:#fff;border:1.5px solid rgba(181,69,27,0.25);border-radius:8px;color:var(--terracotta);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+  .edit-btn{width:32px;height:32px;background:#fff;border:1.5px solid rgba(107,124,92,0.35);border-radius:8px;color:var(--sage);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+  .rc-actions{display:flex;gap:6px;}
   .chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;}
   .chip-pezzi{background:#fef3e2;color:#a06400;}
   .chip-cartoni{background:#e3f2fd;color:#1565c0;}
@@ -127,6 +129,16 @@
   .loading{padding:40px;text-align:center;color:var(--sage);font-size:14px;font-weight:600;}
   .fb-error{background:#fff3cd;border:2px solid #ffc107;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;font-weight:700;color:#856404;display:none;}
   .fb-error.show{display:block;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(45,26,14,0.6);display:none;align-items:center;justify-content:center;z-index:10000;padding:16px;}
+  .modal-box{background:var(--card);border-radius:18px;max-width:460px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,0.35);}
+  .modal-head{background:linear-gradient(135deg,var(--terracotta) 0%,#8c3012 100%);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-radius:18px 18px 0 0;position:sticky;top:0;z-index:1;}
+  .modal-head h3{font-size:15px;font-weight:800;color:#fff;}
+  .modal-close{background:rgba(255,255,255,0.2);border:none;color:#fff;width:30px;height:30px;min-width:30px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:700;}
+  .modal-body{padding:16px;}
+  .modal-foot{padding:14px 16px;display:flex;gap:10px;border-top:1px solid rgba(201,146,26,0.15);position:sticky;bottom:0;background:var(--card);}
+  .btn-edit-save{flex:1;padding:12px;background:linear-gradient(135deg,var(--terracotta) 0%,#8c3012 100%);color:#fff;border:none;border-radius:10px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;cursor:pointer;}
+  .btn-edit-cancel{padding:12px 18px;background:#fff;border:2px solid rgba(107,124,92,0.25);border-radius:10px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:14px;color:var(--sage);cursor:pointer;}
 
   #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--espresso);color:var(--wheat);padding:12px 22px;border-radius:12px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(45,26,14,0.25);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:9999;white-space:nowrap;max-width:90vw;text-align:center;}
   #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
@@ -275,6 +287,28 @@
   </div>
 </div>
 
+<!-- MODALE MODIFICA LAVORAZIONE -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>✏️ Modifica lavorazione</h3><button class="modal-close" onclick="closeEdit()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>📅 Data</label><input type="date" id="edit-data"></div>
+        <div class="form-group"><label>🏢 Cliente</label><input type="text" id="edit-cliente" class="cliente-input" placeholder="es. HOMEGOODS USA" autocomplete="off" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="form-group full"><label>📋 Articolo</label><select id="edit-articolo" onchange="onEditArticoloChange()"></select></div>
+        <div class="form-group"><label>🔤 N° Ordine / Lotto</label><input type="text" id="edit-ordine" autocomplete="off"></div>
+        <div class="form-group"><label id="edit-qty-label">🔢 Quantità</label><input type="number" id="edit-qty" min="0" inputmode="numeric"></div>
+        <div class="form-group" id="edit-cartoni-group" style="display:none;"><label>📫 N° Cartoni</label><input type="number" id="edit-cartoni" min="0" value="0" inputmode="numeric"></div>
+        <div class="form-group full"><label>📝 Note</label><textarea id="edit-note"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-edit-cancel" onclick="closeEdit()">Annulla</button>
+      <button class="btn-edit-save" id="edit-save-btn" onclick="saveEdit()">💾 Salva modifiche</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script type="module">
@@ -369,6 +403,11 @@ function generateMonths(){
 function getCurrentMonth(){
   const d=new Date(),n=["GENNAIO","FEBBRAIO","MARZO","APRILE","MAGGIO","GIUGNO","LUGLIO","AGOSTO","SETTEMBRE","OTTOBRE","NOVEMBRE","DICEMBRE"];
   return n[d.getMonth()]+" "+d.getFullYear();
+}
+function meseKeyDaData(dateStr){
+  const n=["GENNAIO","FEBBRAIO","MARZO","APRILE","MAGGIO","GIUGNO","LUGLIO","AGOSTO","SETTEMBRE","OTTOBRE","NOVEMBRE","DICEMBRE"];
+  const d=new Date(dateStr+'T12:00:00');
+  return (n[d.getMonth()]+' '+d.getFullYear()).replace(/ /g,'_');
 }
 const MONTHS=generateMonths();
 let currentMonth=getCurrentMonth(),workerName='',customTypes=[],currentRows=[],giornate={};
@@ -619,7 +658,7 @@ function renderList(){
             <div class="rc-footer">
               <span class="worker-tag ${isMine?'mine-tag':''}">👤 ${r.lavoratore||'—'}</span>
               ${isMine&&fbKey
-                ?`<button class="del-btn" onclick="deleteRecord('${fbKey}')" title="Elimina">✕</button>`
+                ?`<div class="rc-actions"><button class="edit-btn" onclick="editRecord('${fbKey}')" title="Modifica">✏️</button><button class="del-btn" onclick="deleteRecord('${fbKey}')" title="Elimina">✕</button></div>`
                 :isMine&&!fbKey
                   ?`<button class="del-btn" onclick="deleteRecordLegacy(this)" title="Elimina (legacy)" style="opacity:0.5;">✕</button>`
                   :`<span style="font-size:18px;opacity:0.2;">🔒</span>`}
@@ -685,6 +724,73 @@ window.deleteRecordLegacy=async function(btn){
   if(!confirm('Eliminare questo elemento?'))return;
   // Cerca il record per timestamp nei dati correnti e lo rimuove cercando per contenuto
   toast('⚠️ Elemento non eliminabile, cancella da Firebase','err');
+};
+
+// MODIFICA LAVORAZIONE
+let editRec=null, editArticoli=[];
+window.editRecord=function(fbKey){
+  const r=currentRows.find(x=>x.fbKey===fbKey);
+  if(!r){toast('❌ Lavorazione non trovata','err');return;}
+  editRec={...r};
+  // lista articoli: ufficiali + personalizzati (+ l'attuale se non è in lista)
+  editArticoli=[];
+  PREZZARIO.forEach(p=>editArticoli.push({label:p.desc+(p.unita==='cartoni'?' ✦ a cartoni':''),descrizione:p.desc,prezzo:p.prezzo,unita:p.unita}));
+  (customTypes||[]).forEach(ct=>editArticoli.push({label:'✦ '+ct.label,descrizione:ct.label,prezzo:ct.prezzo||0,unita:ct.unita||'pezzi'}));
+  if(!editArticoli.some(a=>a.descrizione===r.descrizione)){
+    editArticoli.push({label:'✦ '+r.descrizione,descrizione:r.descrizione,prezzo:r.prezzo||0,unita:r.unita||'pezzi'});
+  }
+  document.getElementById('edit-data').value=r.data||'';
+  document.getElementById('edit-cliente').value=r.cliente||'';
+  const sel=document.getElementById('edit-articolo');
+  sel.innerHTML=editArticoli.map((a,i)=>`<option value="${i}">${a.label}</option>`).join('');
+  const idx=editArticoli.findIndex(a=>a.descrizione===r.descrizione);
+  sel.value=String(idx>=0?idx:0);
+  document.getElementById('edit-ordine').value=r.ordine||'';
+  document.getElementById('edit-qty').value=r.quantita||'';
+  document.getElementById('edit-cartoni').value=r.cartoni||0;
+  document.getElementById('edit-note').value=r.note||'';
+  onEditArticoloChange();
+  document.getElementById('edit-modal').style.display='flex';
+};
+window.onEditArticoloChange=function(){
+  const a=editArticoli[parseInt(document.getElementById('edit-articolo').value)||0];
+  const isCart=a&&a.unita==='cartoni';
+  document.getElementById('edit-qty-label').textContent=isCart?'📦 Numero Cartoni':'🔢 Numero Pezzi';
+  document.getElementById('edit-cartoni-group').style.display=isCart?'none':'block';
+};
+window.closeEdit=function(){editRec=null;document.getElementById('edit-modal').style.display='none';};
+window.saveEdit=async function(){
+  if(!editRec)return;
+  const a=editArticoli[parseInt(document.getElementById('edit-articolo').value)||0];
+  if(!a){toast('⚠️ Seleziona un articolo','err');return;}
+  const data=document.getElementById('edit-data').value;
+  if(!data){toast('⚠️ Inserisci la data','err');return;}
+  const qty=parseInt(document.getElementById('edit-qty').value)||0;
+  if(qty<=0){toast('⚠️ Inserisci la quantità','err');return;}
+  const cliente=document.getElementById('edit-cliente').value.trim();
+  const ordine=document.getElementById('edit-ordine').value.trim();
+  const note=document.getElementById('edit-note').value.trim();
+  const unita=a.unita||'pezzi';
+  const cartoni=unita==='pezzi'?(parseInt(document.getElementById('edit-cartoni').value)||0):0;
+  const upd={data,cliente,lavoratore:editRec.lavoratore,descrizione:a.descrizione,prezzo:a.prezzo||0,unita,quantita:qty,cartoni,ordine,note,ts:editRec.ts||Date.now()};
+  const btn=document.getElementById('edit-save-btn');btn.disabled=true;btn.textContent='⏳ Salvataggio…';
+  try{
+    const oldKey=currentMonth.replace(/ /g,'_');
+    const newKey=meseKeyDaData(data);
+    await ponteRendElimina(editRec.fbKey);
+    if(newKey===oldKey){
+      await set(ref(db,'lavori/'+oldKey+'/'+editRec.fbKey),upd);
+      ponteRend(editRec.fbKey,{data,descrizione:a.descrizione,quantita:qty,operatore:editRec.lavoratore});
+    } else {
+      // la data è stata spostata in un altro mese: sposta la registrazione
+      await remove(ref(db,'lavori/'+oldKey+'/'+editRec.fbKey));
+      const nr=await push(ref(db,'lavori/'+newKey),upd);
+      ponteRend(nr.key,{data,descrizione:a.descrizione,quantita:qty,operatore:editRec.lavoratore});
+    }
+    window.closeEdit();
+    toast('✅ Lavorazione modificata!','ok');hideFbError();
+  }catch(e){showFbError();toast('❌ Errore salvataggio','err');console.error(e);}
+  if(btn){btn.disabled=false;btn.textContent='💾 Salva modifiche';}
 };
 
 function toast(msg,type){
