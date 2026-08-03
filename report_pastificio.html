@@ -143,6 +143,11 @@
   .print-header .sub{font-size:13px;color:#666;margin-top:4px;}
   .print-header .data-em{text-align:right;font-size:12px;color:#666;}
   .print-header .data-em strong{display:block;font-size:15px;color:#2d1a0e;}
+
+  /* modalità "senza prezzi" (PDF per la segretaria del pastificio) */
+  .sp-only{display:none;}
+  body.sp .price-col{display:none!important;}
+  body.sp .sp-only{display:block;}
 </style>
 </head>
 <body>
@@ -167,6 +172,7 @@
     <div class="hright">
       <div class="live-pill no-print"><div class="live-dot"></div>Live</div>
       <button class="btn-sm btn-print no-print" onclick="window.print()">🖨️ PDF</button>
+      <button class="btn-sm no-print" onclick="printSenzaPrezzi()">📋 PDF senza prezzi</button>
       <button class="btn-sm no-print" onclick="doLogout()">← Esci</button>
     </div>
   </header>
@@ -253,6 +259,13 @@ window.doLogout=function(){
   document.getElementById('login').style.display='flex';
   document.getElementById('app').style.display='none';
   document.getElementById('pin-input').value='';
+};
+window.printSenzaPrezzi=function(){
+  document.body.classList.add('sp');
+  const off=()=>document.body.classList.remove('sp');
+  window.addEventListener('afterprint',off,{once:true});
+  window.print();
+  setTimeout(off,1500);
 };
 
 // Registra Service Worker per PWA
@@ -366,7 +379,7 @@ function renderContent(){
   const now=new Date().toLocaleDateString('it-IT');
   const sub=currentMonth==='ALL'?'Riepilogo generale':currentMonth;
   document.getElementById('main').innerHTML=
-    `<div class="print-header"><div class="print-header-top"><div><h1>🍝 Antico Pastificio Umbro</h1><div class="sub">Resoconto lavori – ${sub}</div></div><div class="data-em"><span>Data emissione</span><strong>${now}</strong></div></div></div>`+
+    `<div class="print-header"><div class="print-header-top"><div><h1>🍝 Antico Pastificio Umbro</h1><div class="sub">Resoconto lavori – ${sub}</div><div class="sub sp-only">Documento di controllo quantità — senza importi</div></div><div class="data-em"><span>Data emissione</span><strong>${now}</strong></div></div></div>`+
     renderGestioneArticoli()+
     (currentMonth==='ALL'?renderSummary():renderMonth(currentMonth));
 }
@@ -400,8 +413,8 @@ function renderSummary(){
   return `
   <div class="kpi-grid">
     <div class="kpi"><div class="kpi-label">Voci totali</div><div class="kpi-val">${tV}</div></div>
-    <div class="kpi green"><div class="kpi-label">Imponibile</div><div class="kpi-val money">€ ${tI.toFixed(2)}</div><div class="kpi-sub">+IVA € ${tIva.toFixed(2)}</div></div>
-    <div class="kpi rust"><div class="kpi-label">Totale c/IVA</div><div class="kpi-val money">€ ${(tI+tIva).toFixed(2)}</div></div>
+    <div class="kpi green price-col"><div class="kpi-label">Imponibile</div><div class="kpi-val money">€ ${tI.toFixed(2)}</div><div class="kpi-sub">+IVA € ${tIva.toFixed(2)}</div></div>
+    <div class="kpi rust price-col"><div class="kpi-label">Totale c/IVA</div><div class="kpi-val money">€ ${(tI+tIva).toFixed(2)}</div></div>
     <div class="kpi blue no-print-internal"><div class="kpi-label">€ / ora (media)</div><div class="kpi-val blue">${tEO>0?'€ '+tEO.toFixed(2):'—'}</div><div class="kpi-sub">${tO.toFixed(1)} ore·persona tot.</div></div>
   </div>
   <div class="months-grid">
@@ -409,7 +422,7 @@ function renderSummary(){
       <h4>${mc.m}</h4>
       ${!mc.rows.length?'<p style="font-size:12px;color:var(--muted);font-style:italic;">Nessun lavoro</p>':''}
       <div class="mc-total">
-        <div class="val">€ ${(mc.imp+mc.iva).toFixed(2)}</div>
+        <div class="val price-col">€ ${(mc.imp+mc.iva).toFixed(2)}</div>
         <div class="sub no-print-internal">${mc.gs.euroOra>0?'€ '+mc.gs.euroOra.toFixed(2)+'/ora · '+mc.gs.oreP.toFixed(1)+'h':'nessun dato ore'}</div>
       </div>
     </div>`).join('')}
@@ -417,17 +430,17 @@ function renderSummary(){
   <div class="card">
     <div class="card-hdr"><h3>Riepilogo per mese</h3></div>
     <div class="tbl-wrap"><table class="stbl">
-      <thead><tr><th>Mese</th><th>Voci</th><th>Imponibile</th><th>IVA 22%</th><th>Totale</th><th class="no-print-internal">Ore·Persona</th><th class="no-print-internal">€/ora</th></tr></thead>
+      <thead><tr><th>Mese</th><th>Voci</th><th class="price-col">Imponibile</th><th class="price-col">IVA 22%</th><th class="price-col">Totale</th><th class="no-print-internal">Ore·Persona</th><th class="no-print-internal">€/ora</th></tr></thead>
       <tbody>${mcs.map(mc=>`<tr>
         <td><strong>${mc.m}</strong></td><td>${mc.rows.length}</td>
-        <td>€ ${mc.imp.toFixed(2)}</td><td>€ ${mc.iva.toFixed(2)}</td>
-        <td class="money-cell">€ ${(mc.imp+mc.iva).toFixed(2)}</td>
+        <td class="price-col">€ ${mc.imp.toFixed(2)}</td><td class="price-col">€ ${mc.iva.toFixed(2)}</td>
+        <td class="money-cell price-col">€ ${(mc.imp+mc.iva).toFixed(2)}</td>
         <td class="no-print-internal">${mc.gs.oreP>0?`<span class="ora-badge">${mc.gs.oreP.toFixed(1)}h</span>`:'—'}</td>
         <td class="no-print-internal">${mc.gs.euroOra>0?`<span class="euro-ora">€ ${mc.gs.euroOra.toFixed(2)}</span>`:'—'}</td>
       </tr>`).join('')}</tbody>
       <tfoot>
-        <tr><td colspan="2"><strong>TOTALI</strong></td><td>€ ${tI.toFixed(2)}</td><td>€ ${tIva.toFixed(2)}</td><td class="money-cell">€ ${(tI+tIva).toFixed(2)}</td><td class="no-print-internal"><span class="ora-badge">${tO.toFixed(1)}h</span></td><td class="no-print-internal"><span class="euro-ora">€ ${tEO.toFixed(2)}</span></td></tr>
-        <tr class="grand-row"><td colspan="7">TOTALE GENERALE c/IVA</td><td class="grand-num">€ ${(tI+tIva).toFixed(2)}</td></tr>
+        <tr class="price-col"><td colspan="2"><strong>TOTALI</strong></td><td>€ ${tI.toFixed(2)}</td><td>€ ${tIva.toFixed(2)}</td><td class="money-cell">€ ${(tI+tIva).toFixed(2)}</td><td class="no-print-internal"><span class="ora-badge">${tO.toFixed(1)}h</span></td><td class="no-print-internal"><span class="euro-ora">€ ${tEO.toFixed(2)}</span></td></tr>
+        <tr class="grand-row price-col"><td colspan="7">TOTALE GENERALE c/IVA</td><td class="grand-num">€ ${(tI+tIva).toFixed(2)}</td></tr>
       </tfoot>
     </table></div>
   </div>`;
@@ -456,8 +469,8 @@ function renderMonth(month){
   return `
   <div class="kpi-grid">
     <div class="kpi"><div class="kpi-label">Voci</div><div class="kpi-val">${rows.length}</div></div>
-    <div class="kpi green"><div class="kpi-label">Imponibile</div><div class="kpi-val money">€ ${imp.toFixed(2)}</div><div class="kpi-sub">+IVA € ${iva.toFixed(2)}</div></div>
-    <div class="kpi rust"><div class="kpi-label">Totale c/IVA</div><div class="kpi-val money">€ ${(imp+iva).toFixed(2)}</div></div>
+    <div class="kpi green price-col"><div class="kpi-label">Imponibile</div><div class="kpi-val money">€ ${imp.toFixed(2)}</div><div class="kpi-sub">+IVA € ${iva.toFixed(2)}</div></div>
+    <div class="kpi rust price-col"><div class="kpi-label">Totale c/IVA</div><div class="kpi-val money">€ ${(imp+iva).toFixed(2)}</div></div>
     <div class="kpi blue no-print-internal"><div class="kpi-label">€ / ora</div><div class="kpi-val blue">${gs.euroOra>0?'€ '+gs.euroOra.toFixed(2):'—'}</div><div class="kpi-sub">${gs.oreP>0?gs.oreP.toFixed(1)+' ore squadra':'nessun dato ore'}</div></div>
   </div>
 
@@ -527,20 +540,20 @@ function renderMonth(month){
         <th>Articolo</th>
         <th>Unità</th>
         <th>Quantità totale</th>
-        <th>€/unità</th>
-        <th>Importo</th>
+        <th class="price-col">€/unità</th>
+        <th class="price-col">Importo</th>
       </tr></thead>
       <tbody>${Object.entries(byArt).map(([desc,d])=>`<tr>
         <td><strong>${desc}</strong></td>
         <td><span class="chip chip-${d.unita==='cartoni'?'cartoni':'pezzi'}">${d.unita==='cartoni'?'Cartoni':'Pezzi'}</span></td>
         <td><strong>${d.qty.toLocaleString('it')}</strong></td>
-        <td>${d.prezzo>0?'€ '+d.prezzo.toFixed(3):'<span style="background:#c0392b;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;">DA PREZZARE</span>'}</td>
-        <td class="money-cell">€ ${(d.qty*d.prezzo).toFixed(2)}</td>
+        <td class="price-col">${d.prezzo>0?'€ '+d.prezzo.toFixed(3):'<span style="background:#c0392b;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;">DA PREZZARE</span>'}</td>
+        <td class="money-cell price-col">€ ${(d.qty*d.prezzo).toFixed(2)}</td>
       </tr>`).join('')}</tbody>
       <tfoot>
-        <tr><td colspan="4"><strong>Imponibile</strong></td><td class="money-cell">€ ${imp.toFixed(2)}</td></tr>
-        <tr><td colspan="4">IVA 22%</td><td class="money-cell">€ ${iva.toFixed(2)}</td></tr>
-        <tr class="grand-row"><td colspan="4">TOTALE</td><td class="grand-num">€ ${(imp+iva).toFixed(2)}</td></tr>
+        <tr class="price-col"><td colspan="4"><strong>Imponibile</strong></td><td class="money-cell">€ ${imp.toFixed(2)}</td></tr>
+        <tr class="price-col"><td colspan="4">IVA 22%</td><td class="money-cell">€ ${iva.toFixed(2)}</td></tr>
+        <tr class="grand-row price-col"><td colspan="4">TOTALE</td><td class="grand-num">€ ${(imp+iva).toFixed(2)}</td></tr>
       </tfoot>
     </table></div>
   </div>
