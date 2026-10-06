@@ -218,37 +218,37 @@
           <select id="f-articolo" onchange="onArticoloChange()">
             <option value="">— Seleziona articolo —</option>
             <optgroup label="── Etichettatura ──">
-              <option value="ETICHETTA/PREZZATURA|0.045|pezzi">ETICHETTA / PREZZATURA</option>
+              <option value="ETICHETTA/PREZZATURA||pezzi">ETICHETTA / PREZZATURA</option>
             </optgroup>
             <optgroup label="── Riso e Legumi ──">
-              <option value="RISO BOX|0.068|pezzi">RISO BOX</option>
-              <option value="LENTICCHIE BOX|0.068|pezzi">LENTICCHIE BOX</option>
-              <option value="RISO BOX + ETICHETTA|0.095|pezzi">RISO BOX + ETICHETTA</option>
+              <option value="RISO BOX||pezzi">RISO BOX</option>
+              <option value="LENTICCHIE BOX||pezzi">LENTICCHIE BOX</option>
+              <option value="RISO BOX + ETICHETTA||pezzi">RISO BOX + ETICHETTA</option>
             </optgroup>
             <optgroup label="── Pasta e Spaghetti ──">
-              <option value="SPAGHETTI BOX + TIMBRATURA|0.095|pezzi">SPAGHETTI BOX + TIMBRATURA</option>
-              <option value="PASTA BOX + PREZZO|0.095|pezzi">PASTA BOX + PREZZO</option>
-              <option value="PASTA|0.50|cartoni">PASTA ✦ a cartoni</option>
-              <option value="SPAGHETTI COMBINO|0.50|cartoni">SPAGHETTI COMBINO ✦ a cartoni</option>
-              <option value="MISTO STELLE 500G|0.50|cartoni">MISTO STELLE 500G ✦ a cartoni</option>
+              <option value="SPAGHETTI BOX + TIMBRATURA||pezzi">SPAGHETTI BOX + TIMBRATURA</option>
+              <option value="PASTA BOX + PREZZO||pezzi">PASTA BOX + PREZZO</option>
+              <option value="PASTA||cartoni">PASTA ✦ a cartoni</option>
+              <option value="SPAGHETTI COMBINO||cartoni">SPAGHETTI COMBINO ✦ a cartoni</option>
+              <option value="MISTO STELLE 500G||cartoni">MISTO STELLE 500G ✦ a cartoni</option>
             </optgroup>
             <optgroup label="── Gnocchi ──">
-              <option value="GNOCCHI 1KG FORMAGGI|0.55|cartoni">GNOCCHI 1KG FORMAGGI ✦ a cartoni</option>
-              <option value="GNOCCHI 1KG CLASSICI|0.55|cartoni">GNOCCHI 1KG CLASSICI ✦ a cartoni</option>
+              <option value="GNOCCHI 1KG FORMAGGI||cartoni">GNOCCHI 1KG FORMAGGI ✦ a cartoni</option>
+              <option value="GNOCCHI 1KG CLASSICI||cartoni">GNOCCHI 1KG CLASSICI ✦ a cartoni</option>
             </optgroup>
             <optgroup label="── Barattoli ──">
-              <option value="BARATTOLO ETICHETTA + ELASTICO + CAPPUCCIO + RIMESSA NELLA PLASTICA|0.25|pezzi">BARATTOLO ETICHETTA + ELASTICO + CAPPUCCIO + RIMESSA NELLA PLASTICA</option>
-              <option value="BARATTOLO ETICHETTA + ELASTICO + CAPPUCCIO + RIMESSA NEL CARTONE|0.25|pezzi">BARATTOLO ETICHETTA + ELASTICO + CAPPUCCIO + RIMESSA NEL CARTONE</option>
+              <option value="BARATTOLO ETICHETTA + ELASTICO + CAPPUCCIO + RIMESSA NELLA PLASTICA||pezzi">BARATTOLO ETICHETTA + ELASTICO + CAPPUCCIO + RIMESSA NELLA PLASTICA</option>
+              <option value="BARATTOLO ETICHETTA + ELASTICO + CAPPUCCIO + RIMESSA NEL CARTONE||pezzi">BARATTOLO ETICHETTA + ELASTICO + CAPPUCCIO + RIMESSA NEL CARTONE</option>
             </optgroup>
             <optgroup label="── Spezie ──">
-              <option value="SPEZIE BOX + TIMBRATURA|0.25|pezzi">SPEZIE BOX + TIMBRATURA</option>
-              <option value="SPEZIE CARTONE|0.35|cartoni">SPEZIE CARTONE ✦ a cartoni</option>
-              <option value="VASO SPEZIE CARTONE|0.35|cartoni">VASO SPEZIE CARTONE ✦ a cartoni</option>
+              <option value="SPEZIE BOX + TIMBRATURA||pezzi">SPEZIE BOX + TIMBRATURA</option>
+              <option value="SPEZIE CARTONE||cartoni">SPEZIE CARTONE ✦ a cartoni</option>
+              <option value="VASO SPEZIE CARTONE||cartoni">VASO SPEZIE CARTONE ✦ a cartoni</option>
             </optgroup>
             <optgroup label="── Olio e Sale ──">
-              <option value="OLIO BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO|0.25|pezzi">OLIO BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO</option>
-              <option value="OLIO + SPAGO|0.08|pezzi">OLIO + SPAGO</option>
-              <option value="SALE BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO|0.25|pezzi">SALE BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO</option>
+              <option value="OLIO BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO||pezzi">OLIO BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO</option>
+              <option value="OLIO + SPAGO||pezzi">OLIO + SPAGO</option>
+              <option value="SALE BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO||pezzi">SALE BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO</option>
             </optgroup>
             <optgroup label="── Altro ──">
               <option value="__custom__">➕ Articolo non in lista…</option>
@@ -333,31 +333,31 @@ const firebaseConfig = {
 const app=initializeApp(firebaseConfig);
 const db=getDatabase(app);
 
-// ── PREZZARIO UFFICIALE (16 voci) ──
-const PREZZARIO = [
-  {desc:"ETICHETTA/PREZZATURA",          prezzo:0.045, unita:"pezzi"},
-  {desc:"RISO BOX",                       prezzo:0.068, unita:"pezzi"},
-  {desc:"LENTICCHIE BOX",                prezzo:0.068, unita:"pezzi"},
-  {desc:"RISO BOX + ETICHETTA",          prezzo:0.095, unita:"pezzi"},
-  {desc:"SPAGHETTI BOX + TIMBRATURA",    prezzo:0.095, unita:"pezzi"},
-  {desc:"PASTA BOX + PREZZO",            prezzo:0.095, unita:"pezzi"},
-  {desc:"SUGO BARATTOLO + PREZZO + RIMESSA NEL CARTONE",                    prezzo:0.20, unita:"pezzi"},
-  {desc:"OLIVE BARATTOLO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE",         prezzo:0.25, unita:"pezzi"},
-  {desc:"BARATTOLO SUGO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE",          prezzo:0.25, unita:"pezzi"},
-  {desc:"BARATTOLO ETICHETTA + SPAGO + CAPPUCCIO + RIMESSA NEL CARTONE",    prezzo:0.25, unita:"pezzi"},
-  {desc:"SPEZIE BOX + TIMBRATURA",       prezzo:0.25, unita:"pezzi"},
-  {desc:"OLIO BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO",  prezzo:0.25, unita:"pezzi"},
-  {desc:"OLIO + SPAGO",                  prezzo:0.08, unita:"pezzi"},
-  {desc:"SALE BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO",  prezzo:0.25, unita:"pezzi"},
-  {desc:"SPEZIE CARTONE",                prezzo:0.35, unita:"cartoni"},
-  {desc:"VASO SPEZIE CARTONE",           prezzo:0.35, unita:"cartoni"},
-  {desc:"PASTA",                         prezzo:0.50, unita:"cartoni"},
-  {desc:"SPAGHETTI COMBINO",             prezzo:0.50, unita:"cartoni"},
-  {desc:"MISTO STELLE 500G",             prezzo:0.50, unita:"cartoni"},
-  {desc:"GNOCCHI 1KG FORMAGGI",          prezzo:0.55, unita:"cartoni"},
-  {desc:"GNOCCHI 1KG CLASSICI",          prezzo:0.55, unita:"cartoni"},
-  {desc:"BARATTOLO ETICHETTA + ELASTICO + CAPPUCCIO + RIMESSA NELLA PLASTICA", prezzo:0.25, unita:"pezzi"},
-  {desc:"BARATTOLO ETICHETTA + ELASTICO + CAPPUCCIO + RIMESSA NEL CARTONE",    prezzo:0.25, unita:"pezzi"},
+// ── ARTICOLI (senza prezzi: i prezzi stanno solo nel report amministrazione) ──
+const ARTICOLI = [
+  {desc:"ETICHETTA/PREZZATURA",          unita:"pezzi"},
+  {desc:"RISO BOX",                       unita:"pezzi"},
+  {desc:"LENTICCHIE BOX",                unita:"pezzi"},
+  {desc:"RISO BOX + ETICHETTA",          unita:"pezzi"},
+  {desc:"SPAGHETTI BOX + TIMBRATURA",    unita:"pezzi"},
+  {desc:"PASTA BOX + PREZZO",            unita:"pezzi"},
+  {desc:"SUGO BARATTOLO + PREZZO + RIMESSA NEL CARTONE",                    unita:"pezzi"},
+  {desc:"OLIVE BARATTOLO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE",         unita:"pezzi"},
+  {desc:"BARATTOLO SUGO + DOPPIA ETICHETTA + RIMESSA NEL CARTONE",          unita:"pezzi"},
+  {desc:"BARATTOLO ETICHETTA + SPAGO + CAPPUCCIO + RIMESSA NEL CARTONE",    unita:"pezzi"},
+  {desc:"SPEZIE BOX + TIMBRATURA",       unita:"pezzi"},
+  {desc:"OLIO BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO",  unita:"pezzi"},
+  {desc:"OLIO + SPAGO",                  unita:"pezzi"},
+  {desc:"SALE BOTTIGLIA + SPAGO + ETICHETTA + TIMBRO",  unita:"pezzi"},
+  {desc:"SPEZIE CARTONE",                unita:"cartoni"},
+  {desc:"VASO SPEZIE CARTONE",           unita:"cartoni"},
+  {desc:"PASTA",                         unita:"cartoni"},
+  {desc:"SPAGHETTI COMBINO",             unita:"cartoni"},
+  {desc:"MISTO STELLE 500G",             unita:"cartoni"},
+  {desc:"GNOCCHI 1KG FORMAGGI",          unita:"cartoni"},
+  {desc:"GNOCCHI 1KG CLASSICI",          unita:"cartoni"},
+  {desc:"BARATTOLO ETICHETTA + ELASTICO + CAPPUCCIO + RIMESSA NELLA PLASTICA", unita:"pezzi"},
+  {desc:"BARATTOLO ETICHETTA + ELASTICO + CAPPUCCIO + RIMESSA NEL CARTONE",    unita:"pezzi"},
 ];
 
 /* ── PONTE RENDICONTAZIONE (Supabase) ─ ogni lavorazione salvata qui
@@ -744,7 +744,7 @@ window.editRecord=function(fbKey){
   editRec={...r};
   // lista articoli: ufficiali + personalizzati (+ l'attuale se non è in lista)
   editArticoli=[];
-  PREZZARIO.forEach(p=>editArticoli.push({label:p.desc+(p.unita==='cartoni'?' ✦ a cartoni':''),descrizione:p.desc,prezzo:p.prezzo,unita:p.unita}));
+  ARTICOLI.forEach(p=>editArticoli.push({label:p.desc+(p.unita==='cartoni'?' ✦ a cartoni':''),descrizione:p.desc,prezzo:0,unita:p.unita}));
   (customTypes||[]).forEach(ct=>editArticoli.push({label:'✦ '+ct.label,descrizione:ct.label,prezzo:ct.prezzo||0,unita:ct.unita||'pezzi'}));
   if(!editArticoli.some(a=>a.descrizione===r.descrizione)){
     editArticoli.push({label:'✦ '+r.descrizione,descrizione:r.descrizione,prezzo:r.prezzo||0,unita:r.unita||'pezzi'});
