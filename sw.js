@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'pastificio-v26';
+﻿const CACHE_NAME = 'pastificio-v27';
 const ASSETS = [
   '/Lavori-Antico-Pastificio-Umbro/lavori_pastificio.html',
   '/Lavori-Antico-Pastificio-Umbro/report_pastificio.html'

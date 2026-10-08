@@ -595,7 +595,7 @@ function renderMonth(month){
                 <div class="dr-main">
                   ${r.cliente?`<div class="dr-cliente">🏢 ${r.cliente}</div>`:''}
                   <div class="dr-desc">${r.descrizione}<span class="chip chip-${r.unita==='cartoni'?'cartoni':'pezzi'}">${r.unita==='cartoni'?'Cartoni':'Pezzi'}</span></div>
-                  <div class="dr-meta">${r.ordine?'N° '+r.ordine+' · ':''} 👤 ${r.lavoratore||'—'}${r.note?' · 📝 '+r.note:''}</div>
+                  <div class="dr-meta">${r.ordine?'N° '+r.ordine+' · ':''} 👤 ${r.lavoratore||'—'}${r.note?' · 📝 '+r.note:''}${r.fotoUrl?` · <a href="${r.fotoUrl}" target="_blank" rel="noopener" style="color:var(--gold);font-weight:700;text-decoration:none;">📷 Foto ordine</a>`:''}</div>
                 </div>
                 <div class="dr-right">
                   <div class="dr-qty">${Number(r.quantita||0).toLocaleString('it')} ${r.unita==='cartoni'?'cartoni':'pz'}</div>

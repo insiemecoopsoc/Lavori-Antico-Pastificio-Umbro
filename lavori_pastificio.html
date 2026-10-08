@@ -144,6 +144,27 @@
   #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
   #toast.ok{background:var(--sage);}
   #toast.err{background:var(--terracotta);}
+  /* ── LAVORAZIONE DA FOTO (prova) ── */
+  .badge-prova{font-size:10px;font-weight:800;letter-spacing:.6px;background:var(--gold);color:#fff;padding:2px 7px;border-radius:8px;margin-left:6px;vertical-align:middle;}
+  .foto-intro{font-size:13px;color:#6a5a42;line-height:1.5;margin-bottom:12px;}
+  .foto-btns{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn-foto{flex:1;min-width:140px;display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 12px;border-radius:12px;background:var(--espresso);color:var(--wheat);font-weight:700;font-size:15px;cursor:pointer;font-family:'Montserrat',sans-serif;}
+  .btn-foto.alt{background:#fff;color:var(--espresso);border:2px solid rgba(45,26,14,0.2);}
+  .foto-prev{background:#f3efe6;border-radius:12px;padding:6px;text-align:center;margin-bottom:8px;}
+  .foto-prev canvas{max-width:100%;max-height:38vh;border-radius:8px;}
+  .foto-rot{display:flex;gap:8px;margin-bottom:10px;}
+  .foto-rot button{flex:1;padding:9px;border-radius:10px;border:1.5px solid rgba(107,124,92,0.35);background:#fff;font-weight:700;font-size:13px;color:var(--sage);cursor:pointer;font-family:inherit;}
+  .foto-stato{font-size:13px;font-weight:600;color:var(--espresso);background:#fdf6e9;border-radius:10px;padding:10px 12px;margin-bottom:10px;display:none;line-height:1.45;}
+  .foto-stato.ok{background:#eef3ea;color:#3d5a2e;}
+  .foto-stato.warn{background:#fdecea;color:#8a2c14;}
+  .foto-letto{font-size:12.5px;line-height:1.55;background:#fdf6e9;border:1.5px dashed #c99a1a;border-radius:10px;padding:9px 12px;margin-bottom:12px;color:#5a4a32;}
+  .ff-riga{border:1.5px solid rgba(45,26,14,0.12);border-radius:12px;padding:10px;margin-bottom:10px;background:#fff;}
+  .ff-riga-top{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .ff-riga-top select{flex:1;min-width:0;padding:10px;border:2px solid #ddd;border-radius:10px;font-size:14px;background:#fff;font-family:inherit;}
+  .ff-riga-q{display:flex;gap:8px;}
+  .ff-riga-q .form-group{flex:1;}
+  .btn-add-riga{width:100%;padding:11px;border-radius:10px;border:2px dashed rgba(201,146,26,0.55);background:#fffaf0;color:var(--espresso);font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit;}
+  .foto-link{color:var(--sage);font-weight:700;text-decoration:none;}
 </style>
 </head>
 <body>
@@ -194,6 +215,18 @@
         </div>
         <div id="giornata-info" style="display:none;"></div>
         <p style="font-size:11px;color:var(--sage);margin-top:10px;font-weight:600;">💡 Puoi aggiungere più lavorazioni nella stessa giornata usando il form qui sotto.</p>
+      </div>
+    </div>
+
+    <!-- LAVORAZIONE DA FOTO (prova: si affianca al modulo manuale) -->
+    <div class="card">
+      <div class="card-header"><span style="font-size:18px;">📷</span><h3>Lavorazione da foto <span class="badge-prova">PROVA</span></h3></div>
+      <div class="card-body">
+        <p class="foto-intro">Fotografa l'<b>ordine di lavorazione</b>: l'app legge cliente, numero ordine e cartoni. Tu controlli, correggi e salvi.</p>
+        <div class="foto-btns">
+          <label class="btn-foto">📷 Scatta foto<input type="file" accept="image/*" capture="environment" onchange="fotoScelta(this)" hidden></label>
+          <label class="btn-foto alt">🖼️ Dalla galleria<input type="file" accept="image/*" onchange="fotoScelta(this)" hidden></label>
+        </div>
       </div>
     </div>
 
@@ -311,6 +344,34 @@
     <div class="modal-foot">
       <button class="btn-edit-cancel" onclick="closeEdit()">Annulla</button>
       <button class="btn-edit-save" id="edit-save-btn" onclick="saveEdit()">💾 Salva modifiche</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE LAVORAZIONE DA FOTO -->
+<div class="modal-overlay" id="foto-modal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>📷 Lavorazione da foto</h3><button class="modal-close" onclick="chiudiFoto()">✕</button></div>
+    <div class="modal-body">
+      <div class="foto-prev"><canvas id="foto-canvas"></canvas></div>
+      <div class="foto-rot"><button onclick="ruotaFoto(-90)">↺ Ruota</button><button onclick="ruotaFoto(90)">↻ Ruota</button><button onclick="leggiFoto(false)">🔍 Rileggi</button></div>
+      <div class="foto-stato" id="foto-stato"></div>
+      <div id="foto-form" style="display:none;">
+        <div class="foto-letto" id="foto-letto"></div>
+        <div class="form-grid">
+          <div class="form-group"><label>📅 Data lavorazione</label><input type="date" id="ff-data"></div>
+          <div class="form-group"><label>🏢 Cliente</label><input type="text" id="ff-cliente" class="cliente-input" autocomplete="off" oninput="this.value=this.value.toUpperCase()"></div>
+          <div class="form-group"><label>🔤 N° Ordine / Lotto</label><input type="text" id="ff-ordine" autocomplete="off"></div>
+          <div class="form-group full"><label>📝 Prodotto e note</label><textarea id="ff-note"></textarea></div>
+        </div>
+        <div class="sec-label">📋 Lavorazioni da salvare</div>
+        <div id="ff-righe"></div>
+        <button class="btn-add-riga" onclick="aggiungiRigaFoto()">＋ Aggiungi riga (es. etichettatura)</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-edit-cancel" onclick="chiudiFoto()">Annulla</button>
+      <button class="btn-edit-save" id="ff-salva" onclick="salvaFoto()" disabled>💾 Salva lavorazioni</button>
     </div>
   </div>
 </div>
@@ -664,6 +725,7 @@ function renderList(){
               <div class="meta-item"><span class="meta-label">${unita==='cartoni'?'📦 Cartoni':'🔢 Pezzi'}</span><span class="meta-value meta-qty">${Number(r.quantita||0).toLocaleString('it')}</span></div>
               ${unita!=='cartoni'&&r.cartoni?`<div class="meta-item"><span class="meta-label">📫 Cartoni</span><span class="meta-value">${r.cartoni}</span></div>`:''}
               ${r.note?`<div class="meta-item" style="grid-column:1/-1"><span class="meta-label">📝 Note</span><span class="meta-value" style="font-size:12px;">${r.note}</span></div>`:''}
+              ${r.fotoUrl?`<div class="meta-item" style="grid-column:1/-1"><a class="foto-link" href="${r.fotoUrl}" target="_blank" rel="noopener">📷 Vedi foto dell'ordine</a></div>`:''}
             </div>
             <div class="rc-footer">
               <span class="worker-tag ${isMine?'mine-tag':''}">👤 ${r.lavoratore||'—'}</span>
@@ -801,6 +863,190 @@ window.saveEdit=async function(){
     toast('✅ Lavorazione modificata!','ok');hideFbError();
   }catch(e){showFbError();toast('❌ Errore salvataggio','err');console.error(e);}
   if(btn){btn.disabled=false;btn.textContent='💾 Salva modifiche';}
+};
+
+// ══ LAVORAZIONE DA FOTO (prova) ══════════════════════════════════════
+// Lettura gratuita sul telefono (Tesseract). Le righe salvate sono lavorazioni
+// normali: stesso percorso di "Salva lavorazione" (Firebase + ponte rendicontazione).
+// Nessun prezzo: lo applica il report amministrazione.
+function leggiFoglio(testo){
+  const t=String(testo||'').replace(/[“”«»]/g,'"').replace(/[—–]/g,'-');
+  const righe=t.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  const out={cliente:'',ordine:'',prodotto:'',specifiche:'',totale:0,pedane:[]};
+  // N° ordine: numero di 5-7 cifre dopo "Ordine N", altrimenti il primo numero di 6 cifre
+  let m=t.match(/Ordine\s*N\D{0,8}(\d{5,7})\b/i)||t.match(/(?:^|\D)(\d{6})(?!\d)(?![\/.\-]\d)/m);
+  if(m)out.ordine=m[1];
+  // Cliente: parole MAIUSCOLE prima di "- USA" (o di "Ordine N")
+  m=t.match(/((?:[A-Z][A-Z0-9&.'\-]+\s+){0,3}[A-Z][A-Z0-9&.'\-]+)\s*-+\s*(USA|UK|ITALIA|GERMANIA|FRANCIA)\b/);
+  if(m)out.cliente=(m[1].replace(/-+$/,'').trim()+' '+m[2]).replace(/\s+/g,' ');
+  else{const r=righe.find(l=>/Ordine\s*N/i.test(l));if(r){const p=(r.split(/Ordine\s*N/i)[0].match(/[A-Z][A-Z0-9&.'\-]+(?:\s+[A-Z][A-Z0-9&.'\-]+){0,3}/g)||[]).pop();if(p&&p.length>2)out.cliente=p;}}
+  // Prodotto: riga con MISTO / GNOCCHI / SPAGHETTI / PASTA in maiuscolo
+  const rp=righe.find(l=>/\b(MISTO|GNOCCHI|SPAGHETTI|RISO|PASTA)\b/.test(l)&&!/TIPO PEDANA|CARTONE RIF/.test(l));
+  if(rp){const p=rp.match(/\b(MISTO|GNOCCHI|SPAGHETTI|RISO|PASTA)\b[A-Z0-9 +.'\/\-]*/);if(p)out.prodotto=p[0].split(/\.\s/)[0].replace(/\.$/,'').replace(/(\s+[A-Z]{1,2})+$/,'').trim();}
+  // Specifiche: riga con "PZ."
+  const rs=righe.find(l=>/\d+\s*PZ\.?/i.test(l));
+  if(rs){const s=rs.match(/(?:\d+\s*)?PZ\.?.*/i);if(s){let v=s[0];while(/\s(?:[A-Za-z]{1,3}|BOX)$/.test(v))v=v.replace(/\s(?:[A-Za-z]{1,3}|BOX)$/,'');out.specifiche=v.trim();}}
+  // Totale CT
+  m=t.match(/TOTALE\s*C\s*T\D{0,8}(\d{2,5})/i);if(m)out.totale=parseInt(m[1]);
+  // Pedane: codice 8xx/9xx seguito da quantità e "CT"
+  const visti=new Set();
+  righe.forEach(l=>{
+    const p=l.match(/\b([89]\d\d)\b[^\n]*?\b(\d{1,3})\b\s*(?:[0oO]?[kK]|ok|or|DK|0K)?\s*[CcGg][TtIl]?\b/);
+    if(p&&!visti.has(p[1])&&!/^(100|120)$/.test(p[2])){visti.add(p[1]);out.pedane.push({pedana:p[1],ct:parseInt(p[2])});}
+  });
+  return out;
+}
+function mappaArticolo(prodotto){
+  const p=String(prodotto||'').toUpperCase();
+  if(/GNOCCHI/.test(p))return /FORMAG/.test(p)?'GNOCCHI 1KG FORMAGGI':'GNOCCHI 1KG CLASSICI';
+  if(/SPAGHETTI\s*COMBINO/.test(p))return 'SPAGHETTI COMBINO';
+  if(/STELLE/.test(p))return 'MISTO STELLE 500G';
+  return 'PASTA';
+}
+
+const FOTO_BUCKET="ordini-pastificio";
+const FOTO_UP=RB_URL.replace('/rest/v1/','/storage/v1/object/')+FOTO_BUCKET+'/';
+const FOTO_PUB=RB_URL.replace('/rest/v1/','/storage/v1/object/public/')+FOTO_BUCKET+'/';
+let fotoImg=null,fotoRot=0,fotoRighe=[],ocrWorker=null,ocrInCorso=false;
+
+function opzioniArticoli(){
+  const L=ARTICOLI.map(a=>({descrizione:a.desc,unita:a.unita,label:a.desc+(a.unita==='cartoni'?' ✦ a cartoni':'')}));
+  (customTypes||[]).forEach(ct=>{if(ct&&ct.label&&!L.some(x=>x.descrizione===ct.label))L.push({descrizione:ct.label,unita:ct.unita||'pezzi',label:'✦ '+ct.label});});
+  return L;
+}
+function fotoStato(msg,tipo){const e=document.getElementById('foto-stato');e.innerHTML=msg;e.className='foto-stato'+(tipo?' '+tipo:'');e.style.display=msg?'block':'none';}
+function disegnaFoto(maxLato){
+  const r=((fotoRot%360)+360)%360, ruotata=r===90||r===270;
+  const w0=fotoImg.naturalWidth,h0=fotoImg.naturalHeight;
+  const sc=Math.min(1,maxLato/Math.max(w0,h0));
+  const w=Math.round(w0*sc),h=Math.round(h0*sc);
+  const c=document.createElement('canvas');c.width=ruotata?h:w;c.height=ruotata?w:h;
+  const x=c.getContext('2d');x.translate(c.width/2,c.height/2);x.rotate(r*Math.PI/180);x.drawImage(fotoImg,-w/2,-h/2,w,h);
+  return c;
+}
+function preparaPerLettura(c){
+  // scala di grigi + contrasto: migliora la lettura del foglio stampato
+  const x=c.getContext('2d'),d=x.getImageData(0,0,c.width,c.height),p=d.data;
+  const hist=new Uint32Array(256);
+  for(let i=0;i<p.length;i+=4){const g=(p[i]*0.299+p[i+1]*0.587+p[i+2]*0.114)|0;p[i]=g;hist[g]++;}
+  const n=p.length/4;let acc=0,lo=0,hi=255;
+  for(let v=0;v<256;v++){acc+=hist[v];if(acc>n*0.01){lo=v;break;}}
+  acc=0;for(let v=255;v>=0;v--){acc+=hist[v];if(acc>n*0.01){hi=v;break;}}
+  const k=255/Math.max(1,hi-lo);
+  for(let i=0;i<p.length;i+=4){const g=Math.max(0,Math.min(255,(p[i]-lo)*k));p[i]=p[i+1]=p[i+2]=g;}
+  x.putImageData(d,0,0);return c;
+}
+function mostraAnteprima(){const c=disegnaFoto(900),v=document.getElementById('foto-canvas');v.width=c.width;v.height=c.height;v.getContext('2d').drawImage(c,0,0);}
+async function caricaOcr(){
+  if(ocrWorker)return ocrWorker;
+  if(!window.Tesseract){
+    await new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';sc.onload=ok;sc.onerror=()=>ko(new Error('libreria non caricata'));document.head.appendChild(sc);});
+  }
+  ocrWorker=await Tesseract.createWorker('ita',1,{logger:m=>{if(m.status==='recognizing text'&&ocrInCorso)fotoStato('🔍 Sto leggendo il foglio… '+Math.round((m.progress||0)*100)+'%');}});
+  return ocrWorker;
+}
+window.fotoScelta=function(input){
+  const f=input.files&&input.files[0];input.value='';
+  if(!f)return;
+  const img=new Image();
+  img.onload=()=>{fotoImg=img;fotoRot=0;fotoRighe=[];document.getElementById('foto-form').style.display='none';document.getElementById('ff-salva').disabled=true;
+    document.getElementById('foto-modal').style.display='flex';mostraAnteprima();leggiFoto(true);};
+  img.onerror=()=>toast('❌ Foto non leggibile','err');
+  img.src=URL.createObjectURL(f);
+};
+window.ruotaFoto=function(g){if(!fotoImg||ocrInCorso)return;fotoRot=(fotoRot+g+360)%360;mostraAnteprima();};
+window.leggiFoto=async function(auto){
+  if(!fotoImg||ocrInCorso)return;
+  ocrInCorso=true;document.getElementById('ff-salva').disabled=true;
+  let letto=null;
+  try{
+    fotoStato('⏳ Preparo la lettura… (la prima volta scarica il dizionario, serve internet)');
+    const w=await caricaOcr();
+    const prove=auto?[fotoRot,(fotoRot+270)%360,(fotoRot+90)%360]:[fotoRot];
+    for(let i=0;i<prove.length;i++){
+      fotoRot=prove[i];mostraAnteprima();
+      if(i>0)fotoStato('🔄 Provo a girare il foglio ('+(i+1)+'/'+prove.length+')…');
+      const {data}=await w.recognize(preparaPerLettura(disegnaFoto(1600)));
+      const parole=(data.text.match(/ordine|totale|pedana|lavorazione|prodotto/gi)||[]).length;
+      letto=leggiFoglio(data.text);
+      if(parole>=2)break;
+    }
+  }catch(e){console.error(e);letto=null;}
+  ocrInCorso=false;
+  compilaDaFoto(letto||leggiFoglio(''));
+};
+function compilaDaFoto(L){
+  const trovati=[L.cliente&&'cliente',L.ordine&&'n° ordine',L.prodotto&&'prodotto',L.totale&&'totale cartoni'].filter(Boolean);
+  if(trovati.length)fotoStato('✅ Letto: '+trovati.join(', ')+'. Controlla e correggi prima di salvare.','ok');
+  else fotoStato('⚠️ Non riesco a leggere il foglio. Prova a ruotare la foto e premi Rileggi, oppure compila a mano qui sotto.','warn');
+  document.getElementById('ff-data').value=document.getElementById('f-data').value||new Date().toISOString().split('T')[0];
+  document.getElementById('ff-cliente').value=(L.cliente||'').toUpperCase();
+  document.getElementById('ff-ordine').value=L.ordine||'';
+  document.getElementById('ff-note').value=[L.prodotto,L.specifiche].filter(Boolean).join(' — ');
+  const ped=L.pedane.length?'<br>Pedane lette: '+L.pedane.map(p=>p.pedana+' → '+p.ct+' CT').join(' · '):'';
+  document.getElementById('foto-letto').innerHTML=(L.totale?'Sul foglio: <b>totale '+L.totale+' CT</b>.':'Totale cartoni non letto.')+ped+
+    '<br>✍️ Nella quantità metti <b>solo i cartoni lavorati in questa giornata</b>. Se l\'ordine continua domani, il resto lo salvi domani.';
+  fotoRighe=[{descrizione:mappaArticolo(L.prodotto),quantita:L.totale||'',cartoni:0}];
+  disegnaRighe();
+  document.getElementById('foto-form').style.display='block';
+  document.getElementById('ff-salva').disabled=false;
+}
+function disegnaRighe(){
+  const opz=opzioniArticoli();
+  document.getElementById('ff-righe').innerHTML=fotoRighe.map((r,i)=>{
+    const a=opz.find(o=>o.descrizione===r.descrizione)||opz[0];const cart=a.unita==='cartoni';
+    return `<div class="ff-riga">
+      <div class="ff-riga-top"><select onchange="rigaFoto(${i},'descrizione',this.value)">${opz.map(o=>`<option value="${o.descrizione.replace(/"/g,'&quot;')}"${o.descrizione===a.descrizione?' selected':''}>${o.label}</option>`).join('')}</select>
+      ${fotoRighe.length>1?`<button class="del-btn" onclick="togliRigaFoto(${i})" title="Togli riga">✕</button>`:''}</div>
+      <div class="ff-riga-q">
+        <div class="form-group"><label>${cart?'📦 Cartoni lavorati':'🔢 Pezzi'}</label><input type="number" min="0" inputmode="numeric" value="${r.quantita}" oninput="rigaFoto(${i},'quantita',this.value)"></div>
+        ${cart?'':`<div class="form-group"><label>📫 N° Cartoni</label><input type="number" min="0" inputmode="numeric" value="${r.cartoni||0}" oninput="rigaFoto(${i},'cartoni',this.value)"></div>`}
+      </div></div>`;
+  }).join('');
+}
+window.rigaFoto=function(i,campo,v){if(!fotoRighe[i])return;fotoRighe[i][campo]=v;if(campo==='descrizione')disegnaRighe();};
+window.togliRigaFoto=function(i){fotoRighe.splice(i,1);disegnaRighe();};
+window.aggiungiRigaFoto=function(){fotoRighe.push({descrizione:'ETICHETTA/PREZZATURA',quantita:'',cartoni:0});disegnaRighe();};
+window.chiudiFoto=function(){if(ocrInCorso&&!confirm('La lettura è in corso. Chiudere comunque?'))return;document.getElementById('foto-modal').style.display='none';fotoImg=null;fotoRighe=[];};
+async function caricaFotoOrdine(ordine){
+  const blob=await new Promise(ok=>disegnaFoto(1400).toBlob(ok,'image/jpeg',0.72));
+  const d=new Date(),mese=d.toISOString().slice(0,7);
+  const nome=mese+'/'+(String(ordine||'senza-ordine').replace(/[^A-Za-z0-9_-]/g,'')||'ordine')+'_'+d.getTime()+'_'+Math.random().toString(36).slice(2,7)+'.jpg';
+  const r=await fetch(FOTO_UP+nome,{method:'POST',headers:{apikey:RB_KEY,Authorization:'Bearer '+RB_KEY,'Content-Type':'image/jpeg','x-upsert':'false'},body:blob});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return FOTO_PUB+nome;
+}
+window.salvaFoto=async function(){
+  const data=document.getElementById('ff-data').value;
+  if(!data){toast('⚠️ Inserisci la data','err');return;}
+  const opz=opzioniArticoli();
+  const righe=fotoRighe.map(r=>{const a=opz.find(o=>o.descrizione===r.descrizione)||opz[0];return{descrizione:a.descrizione,unita:a.unita,quantita:parseInt(r.quantita)||0,cartoni:a.unita==='pezzi'?(parseInt(r.cartoni)||0):0};});
+  if(!righe.length||righe.some(r=>r.quantita<=0)){toast('⚠️ Metti la quantità in ogni riga','err');return;}
+  const cliente=document.getElementById('ff-cliente').value.trim();
+  const ordine=document.getElementById('ff-ordine').value.trim();
+  const note=document.getElementById('ff-note').value.trim();
+  if(ordine){
+    const gia=currentRows.filter(r=>r.ordine===ordine&&righe.some(x=>x.descrizione===r.descrizione));
+    if(gia.length){const tot=gia.reduce((s,r)=>s+(r.quantita||0),0);
+      if(!confirm('Per l\'ordine '+ordine+' risultano già salvati '+tot.toLocaleString('it')+' ('+[...new Set(gia.map(r=>r.data))].join(', ')+').\nSalvare comunque queste nuove quantità?'))return;}
+  }
+  const btn=document.getElementById('ff-salva');btn.disabled=true;btn.textContent='⏳ Salvataggio…';
+  let fotoUrl='';
+  try{fotoUrl=await caricaFotoOrdine(ordine);}catch(e){console.warn('Foto non caricata:',e);}
+  try{
+    const mese=meseKeyDaData(data);const ts=Date.now();
+    for(let i=0;i<righe.length;i++){
+      const r=righe[i];
+      const rec={data,cliente,lavoratore:workerName,descrizione:r.descrizione,prezzo:0,unita:r.unita,quantita:r.quantita,cartoni:r.cartoni,ordine,note,ts:ts+i,origine:'foto'};
+      if(fotoUrl)rec.fotoUrl=fotoUrl;
+      const nr=await push(ref(db,'lavori/'+mese),rec);
+      ponteRend(nr.key,{data,descrizione:r.descrizione,quantita:r.quantita,operatore:workerName});
+    }
+    document.getElementById('foto-modal').style.display='none';fotoImg=null;fotoRighe=[];
+    toast(fotoUrl?'✅ Lavorazioni salvate con la foto!':'✅ Salvate (foto non caricata)','ok');hideFbError();
+    setTimeout(()=>document.getElementById('record-list').scrollIntoView({behavior:'smooth'}),500);
+  }catch(e){showFbError();toast('❌ Errore salvataggio','err');console.error(e);}
+  btn.disabled=false;btn.textContent='💾 Salva lavorazioni';
 };
 
 function toast(msg,type){
